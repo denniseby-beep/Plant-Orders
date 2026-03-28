@@ -168,6 +168,14 @@ export default function InternalApp({ access, role, readOnly }) {
     };
   }, [orders]);
 
+  const ackLeft = useMemo(() => {
+    return board.ack.filter((_, i) => i % 2 === 0);
+  }, [board.ack]);
+
+  const ackRight = useMemo(() => {
+    return board.ack.filter((_, i) => i % 2 === 1);
+  }, [board.ack]);
+
   const styles = {
     page: {
       minHeight: "100vh",
@@ -261,7 +269,7 @@ export default function InternalApp({ access, role, readOnly }) {
     },
     board: {
       display: "grid",
-      gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+      gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr",
       gap: 14,
       alignItems: "start",
     },
@@ -350,6 +358,9 @@ export default function InternalApp({ access, role, readOnly }) {
       cursor: "pointer",
       fontWeight: 800,
       fontSize: 14,
+    },
+    ackHeaderSpacer: {
+      height: 34,
     },
   };
 
@@ -519,7 +530,15 @@ export default function InternalApp({ access, role, readOnly }) {
               <h2 style={styles.columnTitle}>Acknowledged</h2>
               <div style={styles.badge}>{board.ack.length}</div>
             </div>
-            {board.ack.map(renderCard)}
+            {ackLeft.map(renderCard)}
+          </div>
+
+          <div style={styles.column}>
+            <div style={styles.columnHeader}>
+              <h2 style={styles.columnTitle}>Acknowledged</h2>
+              <div style={styles.ackHeaderSpacer} />
+            </div>
+            {ackRight.map(renderCard)}
           </div>
 
           <div style={styles.column}>
