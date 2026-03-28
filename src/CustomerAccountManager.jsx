@@ -31,7 +31,10 @@ export default function CustomerAccountManager() {
   const [companyName, setCompanyName] = useState("");
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
+<<<<<<< HEAD
   const [password, setPassword] = useState("");
+=======
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState("customer");
   const [canEditUnacknowledged, setCanEditUnacknowledged] = useState(true);
@@ -111,10 +114,13 @@ export default function CustomerAccountManager() {
         throw new Error("Email is required.");
       }
 
+<<<<<<< HEAD
       if (!password.trim()) {
         throw new Error("Password is required for direct customer portal login.");
       }
 
+=======
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
       const {
         data: { session },
         error: sessionError,
@@ -124,6 +130,7 @@ export default function CustomerAccountManager() {
         throw new Error(sessionError.message);
       }
 
+<<<<<<< HEAD
       try {
         const cleanCompanyName = companyName.trim();
         const cleanContactName = contactName.trim();
@@ -213,6 +220,112 @@ export default function CustomerAccountManager() {
         setSaving(false);
       }
 
+=======
+      if (!session?.access_token) {
+        throw new Error("You must be logged in to create customer accounts.");
+      }
+
+      const { data: functionData, error: functionError } =
+        await supabase.functions.invoke("create-customer-account", {
+          body: {
+            company_name: cleanCompanyName,
+            contact_name: cleanContactName,
+            email: cleanEmail,
+            phone: cleanPhone,
+            role,
+            can_edit_unacknowledged: canEditUnacknowledged,
+          },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+      if (functionError) {
+        console.error("create-customer-account function error:", functionError);
+        throw new Error(
+          functionError.context?.error ||
+            functionError.message ||
+            "Failed to create account"
+        );
+      }
+
+      console.log("create-customer-account response:", functionData);
+
+      setMessage(
+        "Customer account created successfully. Next step: click Create Login / Resend Invite."
+      );
+
+      setCompanyName("");
+      setContactName("");
+      setEmail("");
+      setPhone("");
+      setRole("customer");
+      setCanEditUnacknowledged(true);
+
+      await loadAccounts();
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function sendInvite(account) {
+    setError("");
+    setMessage("");
+    setSendingInviteId(account.id);
+
+    try {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        throw new Error(sessionError.message);
+      }
+
+      if (!session?.access_token) {
+        throw new Error("You must be logged in to send invites.");
+      }
+
+      if (!account.email) {
+        throw new Error("This account does not have an email address.");
+      }
+
+      const { data, error: functionError } = await supabase.functions.invoke(
+        "send-customer-invite",
+        {
+          body: {
+            customer_id: account.id,
+            email: String(account.email || "").trim().toLowerCase(),
+            company_name: account.company_name || "",
+            contact_name: account.contact_name || "",
+            role: account.role || "customer",
+            can_edit_unacknowledged: !!account.can_edit_unacknowledged,
+          },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (functionError) {
+        console.error("send-customer-invite function error:", functionError);
+        throw new Error(
+          functionError.context?.error ||
+            functionError.message ||
+            "Failed to send invite"
+        );
+      }
+
+      console.log("send-customer-invite response:", data);
+
+      setMessage(
+        `Invite sent to ${account.contact_name || account.email} successfully.`
+      );
+
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
       await loadAccounts();
       return data;
     } catch (err) {
@@ -365,6 +478,7 @@ export default function CustomerAccountManager() {
           </div>
 
           <div style={{ display: "grid", gap: 6 }}>
+<<<<<<< HEAD
             <label>Password</label>
             <input
               type="password"
@@ -377,6 +491,8 @@ export default function CustomerAccountManager() {
           </div>
 
           <div style={{ display: "grid", gap: 6 }}>
+=======
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
             <label>Phone</label>
             <input
               value={phone}

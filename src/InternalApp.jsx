@@ -59,8 +59,13 @@ const DEFAULTS = {
 };
 
 /* ==================== Truck sizes ==================== */
+<<<<<<< HEAD
 const LOAD_13 = 13.5; // tandem truck equivalent (updated)
 const LOAD_38 = 38.5; // transfer truck equivalent (updated)
+=======
+const LOAD_13 = 13.8; // tandem truck equivalent
+const LOAD_38 = 39; // T4 truck equivalent
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
 
 /* ==================== Status model ==================== */
 const STATUS = {
@@ -271,12 +276,15 @@ function printOrderTicket(order) {
     .topbar { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px; }
     .smallTop { font-size: 12px; }
     .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; margin-bottom: 12px; }
+<<<<<<< HEAD
     .meta > *:first-child {
       max-width: 95%;
       word-break: break-word;
       overflow-wrap: break-word;
       overflow: auto;
     }
+=======
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
     .box { border: 1px solid #111; padding: 10px; border-radius: 8px; }
     .label { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
     .value { font-size: 16px; font-weight: 700; }
@@ -740,11 +748,18 @@ function NumberPad({ ui, darkMode, onKey }) {
 }
 
 /* ==================== App ==================== */
+<<<<<<< HEAD
 export default function InternalApp({ access, role }) {
   const envUrl = import.meta.env.VITE_SUPABASE_URL || "";
   const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
   const supabaseEnabled = Boolean(envUrl && envKey);
   const readOnly = role === "manager";
+=======
+export default function InternalApp() {
+  const envUrl = import.meta.env.VITE_SUPABASE_URL || "";
+  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+  const supabaseEnabled = Boolean(envUrl && envKey);
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
 
   const supabase = useMemo(() => {
     if (!supabaseEnabled) return null;
@@ -786,7 +801,11 @@ export default function InternalApp({ access, role }) {
     jobNumber: "",
     poNumber: "",
     foreman: "",
+<<<<<<< HEAD
     loadTimes: [""], // Array of load times (truck staggers)
+=======
+    loadTime: "",
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
     orderDate: toLocalISODate(),
     pailOfColas: false,
     address: "",
@@ -857,6 +876,7 @@ export default function InternalApp({ access, role }) {
         gridTemplateColumns: "340px 1fr 1fr 1fr 1fr 1fr",
         gap: 12,
         alignItems: "start",
+<<<<<<< HEAD
         minWidth: 0,
         boxSizing: "border-box",
       },
@@ -903,6 +923,68 @@ export default function InternalApp({ access, role }) {
         touchAction: "manipulation",
       },
       // ...existing code...
+=======
+      },
+      card: {
+        background: ui.card,
+        border: `1px solid ${ui.border}`,
+        borderRadius: 14,
+        padding: 12,
+      },
+      h1: { margin: "0 0 8px 0", fontSize: 20 },
+      row: { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" },
+      label: { fontSize: 12, color: ui.muted, marginBottom: 6 },
+      input: {
+        width: "100%",
+        padding: "10px 12px",
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background: darkMode ? "#0f172a" : "#ffffff",
+        color: ui.text,
+        outline: "none",
+        fontSize: 14,
+      },
+      btn: {
+        padding: "10px 12px",
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background: darkMode ? "#0f172a" : "#ffffff",
+        color: ui.text,
+        cursor: "pointer",
+        fontWeight: 700,
+        touchAction: "manipulation",
+      },
+      btnPrimary: {
+        padding: "10px 12px",
+        borderRadius: 12,
+        border: `1px solid ${ui.accent}`,
+        background: ui.accent,
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: 900,
+        touchAction: "manipulation",
+      },
+      btnDanger: {
+        padding: "10px 12px",
+        borderRadius: 12,
+        border: `1px solid ${ui.danger}`,
+        background: ui.danger,
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: 900,
+        touchAction: "manipulation",
+      },
+      btnOk: {
+        padding: "10px 12px",
+        borderRadius: 12,
+        border: `1px solid ${ui.ok}`,
+        background: ui.ok,
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: 900,
+        touchAction: "manipulation",
+      },
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
       btnBigCreate: {
         width: "100%",
         padding: "14px 14px",
@@ -915,6 +997,20 @@ export default function InternalApp({ access, role }) {
         fontSize: 16,
         touchAction: "manipulation",
       },
+<<<<<<< HEAD
+=======
+      orderCard: {
+        background: ui.card,
+        border: `2px solid ${ui.border}`,
+        borderRadius: 14,
+        padding: 8,
+        width: "3in",
+        height: "2in",
+        boxSizing: "border-box",
+        overflow: "auto",
+        fontSize: 11,
+      },
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
       divider: { height: 1, background: ui.border, margin: "10px 0" },
       pill: {
         padding: "4px 8px",
@@ -978,6 +1074,19 @@ export default function InternalApp({ access, role }) {
         fontSize: 11,
         touchAction: "manipulation",
       },
+<<<<<<< HEAD
+=======
+      cloudBar: {
+        display: "flex",
+        gap: 8,
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "10px 12px",
+        borderRadius: 12,
+        border: `1px solid ${ui.border}`,
+        background: darkMode ? "#0f172a" : "#f8fafc",
+      },
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
       colHeader: {
         display: "flex",
         justifyContent: "space-between",
@@ -1000,18 +1109,29 @@ export default function InternalApp({ access, role }) {
         justifyContent: "center",
         padding: 16,
         paddingTop: 18,
+<<<<<<< HEAD
         zIndex: 9999,
+=======
+        zIndex: 60,
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
         overflow: "auto",
       },
       modalCard: {
         width: "min(1100px, 100%)",
         background: ui.card,
+<<<<<<< HEAD
         boxShadow: "0 8px 32px 0 rgba(0,0,0,0.35)",
         border: `2px solid #fff`,
         borderRadius: 16,
         padding: 16,
         position: "relative",
         outline: "4px solid #fff",
+=======
+        border: `1px solid ${ui.border}`,
+        borderRadius: 16,
+        padding: 16,
+        position: "relative",
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
         marginTop: 6,
       },
       modalGrid: {
@@ -1025,7 +1145,11 @@ export default function InternalApp({ access, role }) {
         borderRadius: 14,
         padding: 12,
         background: darkMode ? "#0f172a" : "#f8fafc",
+<<<<<<< HEAD
       }
+=======
+      },
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
     };
   }, [ui, darkMode, touchMode]);
 
@@ -1470,6 +1594,7 @@ export default function InternalApp({ access, role }) {
 
   /* -------------------- Actions -------------------- */
   function upsertUnique(list, value) {
+<<<<<<< HEAD
   const v = value.trim();
   if (!v) return list;
   if (list.some((x) => x.toLowerCase() === v.toLowerCase())) return list;
@@ -1501,6 +1626,37 @@ function resetCreateDraft(dateOverride) {
 function copyOrder(orderId) {
   if (readOnly) return;
 
+=======
+    const v = value.trim();
+    if (!v) return list;
+    if (list.some((x) => x.toLowerCase() === v.toLowerCase())) return list;
+    return [...list, v].sort((a, b) => a.localeCompare(b));
+  }
+
+  // Reset helper for Create form
+  function resetCreateDraft(dateOverride) {
+    setCreateDraft({
+      customer: "",
+      mixType: "",
+      quantityTonne: "",
+      jobNumber: "",
+      poNumber: "",
+      foreman: "",
+      loadTime: "",
+      orderDate: dateOverride || selectedDate || toLocalISODate(),
+      pailOfColas: false,
+      address: "",
+      planned13: "",
+      planned38: "",
+
+      // Weather Call
+      weatherCall: false,
+      weatherCallTime: "",
+    });
+  }
+
+  function copyOrder(orderId) {
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
   const o = orders.find((x) => x.id === orderId);
   if (!o) return;
 
@@ -1511,7 +1667,11 @@ function copyOrder(orderId) {
     jobNumber: o.jobNumber || "",
     poNumber: o.poNumber || "",
     foreman: o.foreman || "",
+<<<<<<< HEAD
     loadTimes: o.loadTimes || [o.loadTime || ""],
+=======
+    loadTime: o.loadTime || "",
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
     orderDate: selectedDate || toLocalISODate(),
     pailOfColas: Boolean(o.pailOfColas),
     address: o.address || "",
@@ -1526,6 +1686,7 @@ function copyOrder(orderId) {
   setCreateOpen(true);
 }
 
+<<<<<<< HEAD
 function openCreateModal() {
   if (readOnly) return;
 
@@ -1938,10 +2099,51 @@ async function saveEdit() {
       completed_at: willReopen ? null : undefined,
     },
     {
+=======
+  function openCreateModal() {
+    resetCreateDraft(selectedDate || toLocalISODate());
+    setCreateOpen(true);
+    if (touchMode) setKbTarget({ mode: "create", field: "customer", type: "text" });
+  }
+
+  function closeCreateModal() {
+    setCreateOpen(false);
+    resetCreateDraft(selectedDate || toLocalISODate());
+    clearKbTarget();
+  }
+
+  async function postCreateOrder() {
+    const cust = String(createDraft.customer || "").trim();
+    const mix = String(createDraft.mixType || "").trim();
+    const qty = clampNumber(createDraft.quantityTonne, 0.01, 999999);
+    const lt = String(createDraft.loadTime || "");
+
+    if (!cust || !mix || !qty || !lt) {
+      alert("Missing required fields: Customer, Mix Type, Quantity (Tonne), Load Time");
+      return;
+    }
+
+    await ensureCustomerInDb(cust);
+    await ensureProductInDb(mix);
+
+    setContractors((prev) => upsertUnique(prev, cust));
+    setMixes((prev) => upsertUnique(prev, mix));
+
+    const p13 = clampInt(createDraft.planned13 || 0, 0, 9999) ?? 0;
+    const p38 = clampInt(createDraft.planned38 || 0, 0, 9999) ?? 0;
+
+    // Weather Call: auto-heal time if checked
+    const wc = Boolean(createDraft.weatherCall);
+    const wcTime = wc ? String(createDraft.weatherCallTime || createDraft.loadTime || "07:00") : "";
+
+    const newOrder = {
+      id: uid(),
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
       customer: cust,
       mixType: mix,
       quantityTonne: qty,
       loadTime: lt,
+<<<<<<< HEAD
       orderDate: editDraft.orderDate || toLocalISODate(),
       jobNumber: String(editDraft.jobNumber || "").trim(),
       poNumber: String(editDraft.poNumber || "").trim(),
@@ -1987,6 +2189,410 @@ async function addContractor() {
   setNewContractorName("");
   loadLists();
 }
+=======
+      orderDate: createDraft.orderDate || selectedDate,
+      jobNumber: String(createDraft.jobNumber || "").trim(),
+      poNumber: String(createDraft.poNumber || "").trim(),
+      foreman: String(createDraft.foreman || "").trim(),
+      status: STATUS.UNACK,
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      completedAt: null,
+      cancelledAt: null,
+      pailOfColas: Boolean(createDraft.pailOfColas),
+      address: String(createDraft.address || "").trim(),
+      planned13: p13,
+      planned38: p38,
+      loaded13: 0,
+      loaded38: 0,
+      loadedRemainderTonne: 0,
+
+      // Weather Call
+      weatherCall: wc,
+      weatherCallTime: wcTime,
+    };
+
+    setOrders((prev) => [newOrder, ...prev]);
+
+    const ok = await cloudUpsert(newOrder);
+    if (!ok) return;
+
+    loadLists();
+
+    // clear form after successful post
+    resetCreateDraft(createDraft.orderDate || selectedDate || toLocalISODate());
+    setCreateOpen(false);
+    clearKbTarget();
+  }
+
+  async function cycleStatus(orderId) {
+    const target = orders.find((o) => o.id === orderId);
+    if (!target) return;
+    if (target.status === STATUS.CANCELLED) return;
+
+    let next;
+    if (target.status === STATUS.UNACK) next = STATUS.ACK;
+    else {
+      const idx = STATUS_CYCLE.indexOf(target.status);
+      next = STATUS_CYCLE[Math.min(idx + 1, STATUS_CYCLE.length - 1)] || STATUS.COMPLETE;
+    }
+
+    const now = nowISO();
+
+    const patchDb = {
+      status: next,
+      updated_at: now,
+      completed_at: next === STATUS.COMPLETE ? now : null,
+    };
+    const patchLocal = {
+      status: next,
+      updatedAt: now,
+      completedAt: next === STATUS.COMPLETE ? now : null,
+    };
+
+    if (next === STATUS.COMPLETE) {
+      const qty = Number(target.quantityTonne || 0);
+      const alreadyLoaded = loadedTonnes(target);
+      const remaining = Math.max(0, qty - alreadyLoaded);
+
+      if (remaining > 0.0001) {
+        const currentRem = Number(target.loadedRemainderTonne || 0);
+        const nextRem = currentRem + remaining;
+
+        patchDb.loaded_remainder_tonne = nextRem;
+        patchLocal.loadedRemainderTonne = nextRem;
+      }
+    }
+
+    await cloudUpdate(orderId, patchDb, patchLocal);
+  }
+
+  async function recallOrder(orderId) {
+    const target = orders.find((o) => o.id === orderId);
+    if (!target) return;
+
+    if (target.status === STATUS.COMPLETE) {
+      const now = nowISO();
+      await cloudUpdate(
+        orderId,
+        { status: STATUS.LOADED, updated_at: now, completed_at: null },
+        { status: STATUS.LOADED, updatedAt: now, completedAt: null }
+      );
+      return;
+    }
+
+    if (target.status === STATUS.CANCELLED) {
+      const now = nowISO();
+      await cloudUpdate(
+        orderId,
+        { status: STATUS.UNACK, cancelled_at: null, updated_at: now },
+        { status: STATUS.UNACK, cancelledAt: null, updatedAt: now }
+      );
+
+      setMessage(`Cancelled order ${target.customer || ""} has been returned to unack list.`);
+      return;
+    }
+
+    return;
+  }
+
+  async function cancelOrder(orderId) {
+    if (!confirm("Cancel this order?")) return;
+    const now = nowISO();
+    await cloudUpdate(
+      orderId,
+      { status: STATUS.CANCELLED, cancelled_at: now, updated_at: now },
+      { status: STATUS.CANCELLED, cancelledAt: now, updatedAt: now }
+    );
+  }
+
+  async function maybeAddMoreMix(order, neededTonnes) {
+    const rem = remainingTonnes(order);
+    if (rem >= neededTonnes) return { ok: true, added: 0 };
+
+    const yes = confirm(
+      `Remaining is ${rem.toFixed(2)} T.\nLoading ${neededTonnes} T will exceed remaining.\n\nDo you want to add more mix to this order?`
+    );
+    if (!yes) return { ok: false, added: 0 };
+
+    const suggested = Math.max(neededTonnes - rem, 0);
+    const input = prompt("How many tonnes do you want to add?", suggested ? String(suggested) : "");
+    if (input == null) return { ok: false, added: 0 };
+
+    const addT = clampNumber(input, 0.01, 999999);
+    if (!addT) {
+      alert("Invalid tonnes amount.");
+      return { ok: false, added: 0 };
+    }
+
+    const now = nowISO();
+    const newQty = Number(order.quantityTonne || 0) + addT;
+
+    await cloudUpdate(
+      order.id,
+      {
+        quantity_tonne: newQty,
+        updated_at: now,
+        status: order.status === STATUS.COMPLETE ? STATUS.LOADED : order.status,
+        completed_at: null,
+      },
+      {
+        quantityTonne: newQty,
+        updatedAt: now,
+        status: order.status === STATUS.COMPLETE ? STATUS.LOADED : order.status,
+        completedAt: null,
+      }
+    );
+
+    return { ok: true, added: addT };
+  }
+
+  async function applyLoad(orderId, tonnes) {
+    const order = orders.find((o) => o.id === orderId);
+    if (!order) return;
+    if (order.status === STATUS.CANCELLED) return;
+
+    const gate = await maybeAddMoreMix(order, tonnes);
+    if (!gate.ok) return;
+
+    const fresh = orders.find((o) => o.id === orderId) || order;
+
+    let nextLoaded13 = Number(fresh.loaded13 || 0);
+    let nextLoaded38 = Number(fresh.loaded38 || 0);
+
+    if (tonnes === LOAD_13) nextLoaded13 += 1;
+    if (tonnes === LOAD_38) nextLoaded38 += 1;
+
+    const now = nowISO();
+    const temp = { ...fresh, loaded13: nextLoaded13, loaded38: nextLoaded38 };
+    const rem = remainingTonnes(temp);
+
+    let nextStatus = fresh.status;
+    let nextCompletedAt = fresh.completedAt ?? null;
+
+    if (nextStatus === STATUS.UNACK) nextStatus = STATUS.ACK;
+
+    if (rem <= 0) {
+      nextStatus = STATUS.COMPLETE;
+      nextCompletedAt = now;
+    } else {
+      if (nextStatus === STATUS.COMPLETE) nextStatus = STATUS.LOADED;
+      nextCompletedAt = null;
+    }
+
+    await cloudUpdate(
+      orderId,
+      {
+        loaded_13: nextLoaded13,
+        loaded_38: nextLoaded38,
+        status: nextStatus,
+        updated_at: now,
+        completed_at: nextStatus === STATUS.COMPLETE ? nextCompletedAt : null,
+      },
+      {
+        loaded13: nextLoaded13,
+        loaded38: nextLoaded38,
+        status: nextStatus,
+        updatedAt: now,
+        completedAt: nextStatus === STATUS.COMPLETE ? nextCompletedAt : null,
+      }
+    );
+  }
+
+  async function applyLoadCustom(orderId) {
+    const order = orders.find((o) => o.id === orderId);
+    if (!order) return;
+    if (order.status === STATUS.CANCELLED) return;
+
+    const raw = prompt("Enter custom load weight in tonnes (e.g. 12.5):", "");
+    if (raw == null) return;
+
+    const tonnes = Number(raw);
+    if (!Number.isFinite(tonnes) || tonnes <= 0) {
+      alert("Invalid weight. Enter a number greater than 0.");
+      return;
+    }
+
+    const gate = await maybeAddMoreMix(order, tonnes);
+    if (!gate.ok) return;
+
+    const fresh = orders.find((o) => o.id === orderId) || order;
+    const nextLoaded13 = Number(fresh.loaded13 || 0);
+    const nextLoaded38 = Number(fresh.loaded38 || 0);
+    const nextLoadedRemainder = Number(fresh.loadedRemainderTonne || 0) + tonnes;
+
+    const now = nowISO();
+    const temp = {
+      ...fresh,
+      loaded13: nextLoaded13,
+      loaded38: nextLoaded38,
+      loadedRemainderTonne: nextLoadedRemainder,
+    };
+    const rem = remainingTonnes(temp);
+
+    let nextStatus = fresh.status;
+    let nextCompletedAt = fresh.completedAt ?? null;
+
+    if (nextStatus === STATUS.UNACK) nextStatus = STATUS.ACK;
+
+    if (rem <= 0) {
+      nextStatus = STATUS.COMPLETE;
+      nextCompletedAt = now;
+    } else {
+      if (nextStatus === STATUS.COMPLETE) nextStatus = STATUS.LOADED;
+      nextCompletedAt = null;
+    }
+
+    await cloudUpdate(
+      orderId,
+      {
+        loaded_13: nextLoaded13,
+        loaded_38: nextLoaded38,
+        loaded_remainder_tonne: nextLoadedRemainder,
+        status: nextStatus,
+        updated_at: now,
+        completed_at: nextStatus === STATUS.COMPLETE ? nextCompletedAt : null,
+      },
+      {
+        loaded13: nextLoaded13,
+        loaded38: nextLoaded38,
+        loadedRemainderTonne: nextLoadedRemainder,
+        status: nextStatus,
+        updatedAt: now,
+        completedAt: nextStatus === STATUS.COMPLETE ? nextCompletedAt : null,
+      }
+    );
+  }
+
+  function startEdit(orderId) {
+    const o = orders.find((x) => x.id === orderId);
+    if (!o) return;
+
+    setEditingId(orderId);
+    setEditDraft({
+      customer: o.customer || "",
+      mixType: o.mixType || "",
+      quantityTonne: String(o.quantityTonne ?? ""),
+      loadTime: o.loadTime || "",
+      orderDate: o.orderDate || toLocalISODate(),
+      jobNumber: o.jobNumber || "",
+      poNumber: o.poNumber || "",
+      foreman: o.foreman || "",
+      pailOfColas: Boolean(o.pailOfColas),
+      address: o.address || "",
+      planned13: String(o.planned13 ?? 0),
+      planned38: String(o.planned38 ?? 0),
+
+      // Weather Call
+      weatherCall: Boolean(o.weatherCall),
+      weatherCallTime: String(o.weatherCallTime || ""),
+    });
+
+    if (touchMode) setKbTarget({ mode: "edit", field: "customer", type: "text" });
+  }
+
+  async function saveEdit() {
+    if (!editingId || !editDraft) return;
+
+    const cust = String(editDraft.customer || "").trim();
+    const mix = String(editDraft.mixType || "").trim();
+    const qty = clampNumber(editDraft.quantityTonne, 0.01, 999999);
+    const lt = String(editDraft.loadTime || "");
+
+    if (!cust || !mix || !qty || !lt) {
+      alert("Missing required fields: Customer, Mix Type, Quantity (Tonne), Load Time");
+      return;
+    }
+
+    await ensureCustomerInDb(cust);
+    await ensureProductInDb(mix);
+
+    setContractors((prev) => upsertUnique(prev, cust));
+    setMixes((prev) => upsertUnique(prev, mix));
+
+    const p13 = clampInt(editDraft.planned13 || 0, 0, 9999) ?? 0;
+    const p38 = clampInt(editDraft.planned38 || 0, 0, 9999) ?? 0;
+
+    // Weather Call: auto-heal time if checked
+    const wc = Boolean(editDraft.weatherCall);
+    const wcTime = wc ? String(editDraft.weatherCallTime || editDraft.loadTime || "07:00") : "";
+
+    const now = nowISO();
+    const existing = orders.find((o) => o.id === editingId);
+    const willReopen = existing && existing.status === STATUS.COMPLETE && qty > loadedTonnes(existing);
+
+    await cloudUpdate(
+      editingId,
+      {
+        customer: cust,
+        mix_type: mix,
+        quantity_tonne: qty,
+        load_time: lt,
+        order_date: editDraft.orderDate || toLocalISODate(),
+        job_number: String(editDraft.jobNumber || "").trim(),
+        po_number: String(editDraft.poNumber || "").trim(),
+        foreman: String(editDraft.foreman || "").trim(),
+        updated_at: now,
+        pail_of_colas: Boolean(editDraft.pailOfColas),
+        address: String(editDraft.address || "").trim(),
+        planned_13: p13,
+        planned_38: p38,
+
+        // Weather Call
+        weather_call: wc,
+        weather_call_time: wcTime,
+
+        status: willReopen ? STATUS.LOADED : undefined,
+        completed_at: willReopen ? null : undefined,
+      },
+      {
+        customer: cust,
+        mixType: mix,
+        quantityTonne: qty,
+        loadTime: lt,
+        orderDate: editDraft.orderDate || toLocalISODate(),
+        jobNumber: String(editDraft.jobNumber || "").trim(),
+        poNumber: String(editDraft.poNumber || "").trim(),
+        foreman: String(editDraft.foreman || "").trim(),
+        updatedAt: now,
+        pailOfColas: Boolean(editDraft.pailOfColas),
+        address: String(editDraft.address || "").trim(),
+        planned13: p13,
+        planned38: p38,
+
+        // Weather Call
+        weatherCall: wc,
+        weatherCallTime: wcTime,
+
+        ...(willReopen ? { status: STATUS.LOADED, completedAt: null } : {}),
+      }
+    );
+
+    setEditingId(null);
+    setEditDraft(null);
+    clearKbTarget();
+    loadLists();
+  }
+
+  function closeEdit() {
+    setEditingId(null);
+    setEditDraft(null);
+    clearKbTarget();
+  }
+
+  async function addContractor() {
+    const name = newContractorName.trim();
+    if (!name) return;
+    if (!supabase) return alert("Supabase OFF (missing env vars).");
+
+    const { error } = await supabase.from("customers").insert([{ name, is_active: true }]).select();
+    if (error) return alert("Customer insert failed: " + error.message);
+
+    setContractors((prev) => upsertUnique(prev, name));
+    setNewContractorName("");
+    loadLists();
+  }
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
 
   function removeContractor(name) {
     if (!confirm(`Remove customer "${name}"?`)) return;
@@ -2031,6 +2637,7 @@ async function addContractor() {
 
   /* -------------------- Input components -------------------- */
   function TextInput({ mode, field, value, onChange, placeholder, type = "text" }) {
+<<<<<<< HEAD
     // Use searchInput style for search bar
     const inputStyle = {
       ...styles.input,
@@ -2040,6 +2647,14 @@ async function addContractor() {
     return (
       <input
         style={inputStyle}
+=======
+    return (
+      <input
+        style={{
+          ...styles.input,
+          border: isActiveField(mode, field) ? `2px solid ${ui.accent}` : `1px solid ${ui.border}`,
+        }}
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
         value={value}
         placeholder={placeholder}
         inputMode={type === "number" ? "numeric" : type === "decimal" ? "decimal" : "text"}
@@ -2390,6 +3005,7 @@ async function addContractor() {
   /* -------------------- Render -------------------- */
   return (
     <div style={styles.page}>
+<<<<<<< HEAD
       {readOnly && (
   <div
     style={{
@@ -2405,6 +3021,8 @@ async function addContractor() {
     Manager Mode: Read Only
   </div>
 )}
+=======
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
       {/* COL 1: Controls + Dashboard + Big Create Button */}
       <div
         style={{
@@ -2430,6 +3048,7 @@ async function addContractor() {
               </button>
             </div>
           </div>
+<<<<<<< HEAD
 
           {readOnly && (
             <div
@@ -2459,6 +3078,10 @@ async function addContractor() {
               disabled={readOnly}
               type="button"
             >
+=======
+          <div style={{ marginTop: 10 }}>
+            <button style={styles.btnBigCreate} onClick={openCreateModal} type="button">
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
               ➕ Create New Order
             </button>
           </div>
@@ -2656,6 +3279,7 @@ async function addContractor() {
                     value={newContractorName}
                     onChange={(e) => setNewContractorName(e.target.value)}
                     placeholder="Type customer name…"
+<<<<<<< HEAD
                     disabled={readOnly}
                   />
                   {!readOnly && (
@@ -2663,16 +3287,28 @@ async function addContractor() {
                       Add
                     </button>
                   )}
+=======
+                  />
+                  <button style={styles.btnPrimary} onClick={addContractor} type="button">
+                    Add
+                  </button>
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                 </div>
                 <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
                   {contractors.map((c) => (
                     <div key={c} style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
                       <div style={{ fontWeight: 800 }}>{c}</div>
+<<<<<<< HEAD
                       {!readOnly && (
                         <button style={styles.btn} onClick={() => removeContractor(c)} type="button">
                           Remove
                         </button>
                       )}
+=======
+                      <button style={styles.btn} onClick={() => removeContractor(c)} type="button">
+                        Remove
+                      </button>
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                     </div>
                   ))}
                 </div>
@@ -2688,6 +3324,7 @@ async function addContractor() {
                     value={newMixName}
                     onChange={(e) => setNewMixName(e.target.value)}
                     placeholder="Type mix name…"
+<<<<<<< HEAD
                     disabled={readOnly}
                   />
                   {!readOnly && (
@@ -2695,16 +3332,28 @@ async function addContractor() {
                       Add
                     </button>
                   )}
+=======
+                  />
+                  <button style={styles.btnPrimary} onClick={addMix} type="button">
+                    Add
+                  </button>
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                 </div>
                 <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
                   {mixes.map((m) => (
                     <div key={m} style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
                       <div style={{ fontWeight: 800 }}>{m}</div>
+<<<<<<< HEAD
                       {!readOnly && (
                         <button style={styles.btn} onClick={() => removeMix(m)} type="button">
                           Remove
                         </button>
                       )}
+=======
+                      <button style={styles.btn} onClick={() => removeMix(m)} type="button">
+                        Remove
+                      </button>
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                     </div>
                   ))}
                 </div>
@@ -2714,10 +3363,18 @@ async function addContractor() {
             </div>
           </div>
         )}
+<<<<<<< HEAD
       </div>
 
       {/* COL 2: ACKNOWLEDGED */}
       <div style={{ gridColumn: "2 / 3" }}>
+=======
+
+      </div>
+
+      {/* COL 2-3: ACKNOWLEDGED */}
+      <div style={{ gridColumn: "2 / 4" }}>
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
         <div style={styles.card}>
           <div style={styles.colHeader}>
             <span>Acknowledged</span>
@@ -2730,8 +3387,13 @@ async function addContractor() {
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* COL 3: LOADING */}
       <div style={{ gridColumn: "3 / 4" }}>
+=======
+      {/* COL 4-5: LOADING */}
+      <div style={{ gridColumn: "4 / 6" }}>
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
         <div style={styles.card}>
           <div style={styles.colHeader}>
             <span>Loading</span>
@@ -2744,8 +3406,13 @@ async function addContractor() {
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* COL 4: COMPLETED */}
       <div style={{ gridColumn: "4 / 5" }}>
+=======
+      {/* COL 6: COMPLETED */}
+      <div style={{ gridColumn: "6 / 7" }}>
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
         <div style={styles.card}>
           <div style={styles.colHeader}>
             <span>Completed</span>
@@ -2763,7 +3430,11 @@ async function addContractor() {
       </div>
 
       {/* ==================== CREATE MODAL (with inlay keyboard/numpad) ==================== */}
+<<<<<<< HEAD
       {createOpen && !readOnly && (
+=======
+      {createOpen && (
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
         <div style={styles.modalOverlay} onClick={closeCreateModal}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -2804,6 +3475,7 @@ async function addContractor() {
                   </div>
 
                   <div>
+<<<<<<< HEAD
                     <div style={styles.label}>Load Times (required)</div>
                     {createDraft.loadTimes && createDraft.loadTimes.length > 0 && createDraft.loadTimes.map((lt, idx) => (
                       <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -2835,6 +3507,20 @@ async function addContractor() {
                     >
                       Add Load Time
                     </button>
+=======
+                    <div style={styles.label}>Load Time (required)</div>
+                    <TimePicker
+                      value={createDraft.loadTime}
+                      onChange={(hhmm) =>
+                        setCreateDraft((d) => ({
+                          ...d,
+                          loadTime: hhmm,
+                          // If weather call checked but time blank, keep it sensible
+                          weatherCallTime: d.weatherCall ? (d.weatherCallTime || hhmm || "07:00") : d.weatherCallTime,
+                        }))
+                      }
+                    />
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                     <div style={styles.small}>Hour / Minute / AM-PM • Minutes in 5 min steps</div>
                   </div>
 
@@ -2858,6 +3544,10 @@ async function addContractor() {
                             return {
                               ...d,
                               weatherCall: checked,
+<<<<<<< HEAD
+=======
+                              // AUTO-FILL time on check, clear on uncheck
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                               weatherCallTime: checked ? (d.weatherCallTime || fallbackTime) : "",
                             };
                           })
@@ -2998,6 +3688,10 @@ async function addContractor() {
                     <span style={styles.small}>Pail of Colas</span>
                   </label>
 
+<<<<<<< HEAD
+=======
+                  {/* Footer buttons */}
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                   <div style={{ ...styles.row, justifyContent: "space-between", marginTop: 6 }}>
                     <button style={styles.btn} onClick={closeCreateModal} type="button">
                       Close
@@ -3023,6 +3717,10 @@ async function addContractor() {
                 </div>
               </div>
 
+<<<<<<< HEAD
+=======
+              {/* RIGHT: INLAY KEYBOARD/NUMPAD (Touch mode only) */}
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
               {touchMode && (
                 <div style={styles.modalKbPanel}>
                   <ActiveFieldHint />
@@ -3040,7 +3738,11 @@ async function addContractor() {
       )}
 
       {/* ==================== EDIT MODAL (with inlay keyboard/numpad) ==================== */}
+<<<<<<< HEAD
       {editingId && editDraft && !readOnly && (
+=======
+      {editingId && editDraft && (
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
         <div style={styles.modalOverlay} onClick={closeEdit}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -3051,6 +3753,10 @@ async function addContractor() {
             <div style={styles.divider} />
 
             <div style={styles.modalGrid}>
+<<<<<<< HEAD
+=======
+              {/* LEFT: FORM */}
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
               <div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   <div>
@@ -3093,6 +3799,10 @@ async function addContractor() {
                     />
                   </div>
 
+<<<<<<< HEAD
+=======
+                  {/* WEATHER CALL */}
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                   <div
                     style={{
                       gridColumn: "1 / -1",
@@ -3113,6 +3823,10 @@ async function addContractor() {
                             return {
                               ...d,
                               weatherCall: checked,
+<<<<<<< HEAD
+=======
+                              // AUTO-FILL time on check, clear on uncheck
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                               weatherCallTime: checked ? (d.weatherCallTime || fallbackTime) : "",
                             };
                           })
@@ -3257,6 +3971,10 @@ async function addContractor() {
                 </div>
               </div>
 
+<<<<<<< HEAD
+=======
+              {/* RIGHT: INLAY KEYBOARD/NUMPAD (Touch mode only) */}
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
               {touchMode && (
                 <div style={styles.modalKbPanel}>
                   <ActiveFieldHint />

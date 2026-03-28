@@ -166,7 +166,13 @@ function buildEmptyForm(customerName = "") {
 
 export default function CustomerPortal() {
   const [session, setSession] = useState(null);
+<<<<<<< HEAD
   const [authChecked, setAuthChecked] = useState(false);
+=======
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
 
   const [lockedCustomer, setLockedCustomer] = useState("");
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -187,6 +193,7 @@ export default function CustomerPortal() {
   const [editDesignatedTimesOpen, setEditDesignatedTimesOpen] = useState(false);
 
   useEffect(() => {
+<<<<<<< HEAD
     let mounted = true;
 
     async function init() {
@@ -206,10 +213,16 @@ export default function CustomerPortal() {
     }
 
     init();
+=======
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session || null);
+    });
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+<<<<<<< HEAD
       if (!mounted) return;
 
       if (!nextSession) {
@@ -229,16 +242,64 @@ export default function CustomerPortal() {
 
   useEffect(() => {
     if (!session) return;
+=======
+      setSession(nextSession || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setLockedCustomer("");
+      setForm(buildEmptyForm());
+      setEditForm(buildEmptyForm());
+      setCustomerOrders([]);
+      setLoadingProfile(false);
+      setLoadingOrders(false);
+      return;
+    }
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
 
     loadMixes();
     loadLockedCustomer();
   }, [session]);
 
+<<<<<<< HEAD
   async function handleForgotPassword() {
     const cleanEmail = String(session?.user?.email || "").trim().toLowerCase();
 
     if (!cleanEmail) {
       alert("No email found for this account.");
+=======
+  async function signIn(e) {
+    e.preventDefault();
+
+    const cleanEmail = String(email || "").trim();
+    const cleanPassword = String(password || "").trim();
+
+    if (!cleanEmail || !cleanPassword) {
+      alert("Enter email and password.");
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: cleanEmail,
+      password: cleanPassword,
+    });
+
+    if (error) {
+      console.error("Login error:", error);
+      alert(error.message);
+    }
+  }
+
+  async function handleForgotPassword() {
+    const cleanEmail = String(email || "").trim();
+
+    if (!cleanEmail) {
+      alert("Enter your email first.");
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
       return;
     }
 
@@ -273,8 +334,13 @@ export default function CustomerPortal() {
     setEditOpen(false);
     setDesignatedTimesOpen(false);
     setEditDesignatedTimesOpen(false);
+<<<<<<< HEAD
 
     window.location.pathname = "/";
+=======
+    setEmail("");
+    setPassword("");
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
   }
 
   async function loadMixes() {
@@ -304,6 +370,7 @@ export default function CustomerPortal() {
   async function loadLockedCustomer() {
     setLoadingProfile(true);
 
+<<<<<<< HEAD
     try {
       const {
         data: { user },
@@ -348,6 +415,49 @@ export default function CustomerPortal() {
     } finally {
       setLoadingProfile(false);
     }
+=======
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error("Auth user error:", userError);
+      setLockedCustomer("");
+      setLoadingProfile(false);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("customer_accounts")
+      .select("id, company_name, active, auth_user_id")
+      .eq("auth_user_id", user.id)
+      .single();
+
+    if (error || !data) {
+      console.error("Customer account load error:", error);
+      setLockedCustomer("");
+      setLoadingProfile(false);
+      alert(
+        "This login is not linked to a customer account yet. Please contact the plant."
+      );
+      return;
+    }
+
+    if (!data.active) {
+      alert("This customer account is inactive. Please contact the plant.");
+      await supabase.auth.signOut();
+      setLockedCustomer("");
+      setLoadingProfile(false);
+      return;
+    }
+
+    const customerName = String(data.company_name || "").trim();
+    setLockedCustomer(customerName);
+    setForm(buildEmptyForm(customerName));
+    await loadCustomerOrders(customerName);
+    setLoadingProfile(false);
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
   }
 
   async function loadCustomerOrders(customerName) {
@@ -387,7 +497,11 @@ export default function CustomerPortal() {
         status,
         created_at
       `)
+<<<<<<< HEAD
       .or(`customer_owner.eq.${cleanCustomer},customer.eq.${cleanCustomer}`)
+=======
+      .eq("customer_owner", cleanCustomer)
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
       .order("order_date", { ascending: false })
       .order("load_time", { ascending: true });
 
@@ -863,6 +977,7 @@ export default function CustomerPortal() {
         }));
       }
 
+<<<<<<< HEAD
   const orderData = {
   customer_owner: lockedCustomer,
   customer: lockedCustomer,
@@ -914,6 +1029,52 @@ await loadCustomerOrders(lockedCustomer);
   alert("Error creating order.");
 }
 }
+=======
+      const payload = {
+        customer_owner: lockedCustomer,
+        customer: lockedCustomer,
+        mix_type: String(form.mix_type || "").trim(),
+        quantity_tonne: qty,
+        order_date: form.order_date,
+        load_time: loadTime,
+        address: String(form.address || "").trim(),
+        site_contact_name: String(form.site_contact_name || "").trim(),
+        site_contact_phone: String(form.site_contact_phone || "").trim(),
+        job_number: String(form.job_number || "").trim(),
+        po_number: String(form.po_number || "").trim(),
+        foreman: String(form.foreman || "").trim(),
+        notes: String(form.notes || "").trim(),
+        trucks_working: trucksWorkingValue,
+        truck_schedule_mode: form.truck_schedule_mode,
+        stagger_minutes:
+          form.truck_schedule_mode === "stagger" ? staggerMinutesValue : null,
+        designated_start_times:
+          form.truck_schedule_mode === "designated"
+            ? designatedStartTimesValue
+            : null,
+        weather_call: Boolean(form.weather_call),
+        weather_call_time: weatherCallTime,
+        source_app: "customer_portal",
+        status: "Unacknowledged",
+      };
+
+      const { error } = await supabase.from("orders").insert([payload]);
+
+      if (error) {
+        console.error("Order insert error:", error);
+        alert(`Error creating order: ${error.message}`);
+        return;
+      }
+
+      alert("Order sent to plant.");
+      resetForm();
+      await loadCustomerOrders(lockedCustomer);
+    } catch (err) {
+      console.error(err);
+      alert("Error creating order.");
+    }
+  }
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
 
   async function saveEditOrder(e) {
     e.preventDefault();
@@ -1029,7 +1190,11 @@ await loadCustomerOrders(lockedCustomer);
         .from("orders")
         .update(updatePayload)
         .eq("id", editingOrderId)
+<<<<<<< HEAD
         .or(`customer_owner.eq.${lockedCustomer},customer.eq.${lockedCustomer}`)
+=======
+        .eq("customer_owner", lockedCustomer)
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
         .eq("status", "Unacknowledged");
 
       if (error) {
@@ -1206,19 +1371,44 @@ await loadCustomerOrders(lockedCustomer);
       flexWrap: "wrap",
       marginTop: 12,
     },
+<<<<<<< HEAD
+=======
+    loginWrap: {
+      minHeight: "100vh",
+      background: "#f6f7fb",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 16,
+      fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+    },
+    loginCard: {
+      width: "100%",
+      maxWidth: 420,
+      background: "#ffffff",
+      border: "1px solid #e5e7eb",
+      borderRadius: 18,
+      padding: 18,
+      boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+    },
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
     ordersWrap: {
       marginTop: 24,
       display: "grid",
       gap: 12,
+<<<<<<< HEAD
       padding: 14,
       borderRadius: 16,
       background: "linear-gradient(180deg, #ecfdf5 0%, #bbf7d0 100%)",
       border: "1px solid #34d399",
+=======
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
     },
     sectionTitle: {
       margin: "0 0 4px 0",
       fontSize: 22,
       fontWeight: 950,
+<<<<<<< HEAD
       color: "#1e40af",
     },
     orderCard: {
@@ -1227,6 +1417,14 @@ await loadCustomerOrders(lockedCustomer);
       padding: 14,
       background: "#ffffff",
       boxShadow: "0 3px 10px rgba(15, 23, 42, 0.08)",
+=======
+    },
+    orderCard: {
+      border: "1px solid #e5e7eb",
+      borderRadius: 16,
+      padding: 14,
+      background: "#f8fafc",
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
     },
     orderTop: {
       display: "flex",
@@ -1290,6 +1488,7 @@ await loadCustomerOrders(lockedCustomer);
       borderRadius: 14,
       background: "#f8fafc",
     },
+<<<<<<< HEAD
     topSection: {
       padding: 16,
       borderRadius: 16,
@@ -1297,6 +1496,8 @@ await loadCustomerOrders(lockedCustomer);
       background: "linear-gradient(180deg, #ede9fe 0%, #ddd6fe 100%)",
       border: "1px solid #a78bfa",
     },
+=======
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
     modalOverlay: {
       position: "fixed",
       inset: 0,
@@ -1333,11 +1534,60 @@ await loadCustomerOrders(lockedCustomer);
     },
   };
 
+<<<<<<< HEAD
   if (!authChecked || loadingProfile) {
     return (
       <div style={styles.page}>
         <div style={styles.shell}>
           <div style={styles.sub}>Checking customer access...</div>
+=======
+  if (!session) {
+    return (
+      <div style={styles.loginWrap}>
+        <div style={styles.loginCard}>
+          <h2 style={{ marginTop: 0, marginBottom: 8 }}>Customer Login</h2>
+          <div style={{ marginBottom: 14, color: "#64748b", fontSize: 14 }}>
+            Sign in to place and manage your company orders.
+          </div>
+
+          <form onSubmit={signIn} style={styles.form}>
+            <div>
+              <label style={styles.label}>Email</label>
+              <input
+                style={styles.input}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                autoComplete="username"
+              />
+            </div>
+
+            <div>
+              <label style={styles.label}>Password</label>
+              <input
+                style={styles.input}
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                autoComplete="current-password"
+              />
+            </div>
+
+            <button type="submit" style={styles.btnPrimary}>
+              Login
+            </button>
+
+            <button
+              type="button"
+              style={styles.btnSecondary}
+              onClick={handleForgotPassword}
+            >
+              Forgot Password
+            </button>
+          </form>
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
         </div>
       </div>
     );
@@ -1346,6 +1596,7 @@ await loadCustomerOrders(lockedCustomer);
   return (
     <div style={styles.page}>
       <div style={styles.shell}>
+<<<<<<< HEAD
         <div style={styles.topSection}>
           <div style={styles.titleRow}>
             <div>
@@ -1394,10 +1645,108 @@ await loadCustomerOrders(lockedCustomer);
                 {mixOptions.map((mix) => (
                   <option key={mix} value={mix}>
                     {mix}
+=======
+        <div style={styles.titleRow}>
+          <div>
+            <h1 style={styles.h1}>Customer Orders</h1>
+            <div style={styles.sub}>
+              Logged in as <b>{lockedCustomer || "Unknown Customer"}</b>
+            </div>
+          </div>
+
+          <button style={styles.btnSecondary} onClick={signOut} type="button">
+            Logout
+          </button>
+        </div>
+
+        <form onSubmit={onSubmit} style={styles.form}>
+          <div>
+            <label style={styles.label}>Customer</label>
+            <input
+              style={{ ...styles.input, ...styles.readonly }}
+              value={lockedCustomer || ""}
+              readOnly
+            />
+          </div>
+
+          <div>
+            <label style={styles.label}>Mix</label>
+            <select
+              style={styles.select}
+              value={form.mix_type}
+              onChange={(e) => setField("mix_type", e.target.value)}
+            >
+              <option value="">Select Mix</option>
+              {mixOptions.map((mix) => (
+                <option key={mix} value={mix}>
+                  {mix}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={styles.label}>Quantity (tonnes)</label>
+            <input
+              style={styles.input}
+              value={form.quantity_tonne}
+              onChange={(e) => setField("quantity_tonne", e.target.value)}
+              inputMode="decimal"
+              placeholder="ex: 200"
+            />
+          </div>
+
+          <div>
+            <label style={styles.label}>Order Date</label>
+            <input
+              style={styles.input}
+              type="date"
+              value={form.order_date}
+              onChange={(e) => setField("order_date", e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label style={styles.label}>Load Time</label>
+            <div style={styles.timeRow}>
+              <select
+                style={styles.select}
+                value={form.load_hour}
+                onChange={(e) => setField("load_hour", e.target.value)}
+              >
+                {HOURS.map((h) => (
+                  <option key={h} value={String(h)}>
+                    {h}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                style={styles.select}
+                value={form.load_min}
+                onChange={(e) => setField("load_min", e.target.value)}
+              >
+                {MINUTES.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                style={styles.select}
+                value={form.load_ampm}
+                onChange={(e) => setField("load_ampm", e.target.value)}
+              >
+                {AM_PM.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                   </option>
                 ))}
               </select>
             </div>
+<<<<<<< HEAD
 
             <div>
               <label style={styles.label}>Quantity (tonnes)</label>
@@ -1427,6 +1776,85 @@ await loadCustomerOrders(lockedCustomer);
                   style={styles.select}
                   value={form.load_hour}
                   onChange={(e) => setField("load_hour", e.target.value)}
+=======
+          </div>
+
+          <div>
+            <label style={styles.label}>Address</label>
+            <input
+              style={styles.input}
+              value={form.address}
+              onChange={(e) => setField("address", e.target.value)}
+              placeholder="Job site address"
+            />
+          </div>
+
+          <div>
+            <label style={styles.label}>Site Contact</label>
+            <input
+              style={styles.input}
+              value={form.site_contact_name}
+              onChange={(e) => setField("site_contact_name", e.target.value)}
+              placeholder="Site contact name"
+            />
+          </div>
+
+          <div>
+            <label style={styles.label}>Phone</label>
+            <input
+              style={styles.input}
+              value={form.site_contact_phone}
+              onChange={(e) => setField("site_contact_phone", e.target.value)}
+              inputMode="tel"
+              placeholder="Site contact phone"
+            />
+          </div>
+
+          <div>
+            <label style={styles.label}>Job #</label>
+            <input
+              style={styles.input}
+              value={form.job_number}
+              onChange={(e) => setField("job_number", e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label style={styles.label}>PO #</label>
+            <input
+              style={styles.input}
+              value={form.po_number}
+              onChange={(e) => setField("po_number", e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label style={styles.label}>Foreman</label>
+            <input
+              style={styles.input}
+              value={form.foreman}
+              onChange={(e) => setField("foreman", e.target.value)}
+            />
+          </div>
+
+          <div style={styles.checkRow}>
+            <input
+              type="checkbox"
+              checked={form.weather_call}
+              onChange={(e) => setField("weather_call", e.target.checked)}
+            />
+            Weather Call
+          </div>
+
+          {form.weather_call && (
+            <div>
+              <label style={styles.label}>Weather Call Time</label>
+              <div style={styles.timeRow}>
+                <select
+                  style={styles.select}
+                  value={form.weather_hour}
+                  onChange={(e) => setField("weather_hour", e.target.value)}
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                 >
                   {HOURS.map((h) => (
                     <option key={h} value={String(h)}>
@@ -1437,8 +1865,13 @@ await loadCustomerOrders(lockedCustomer);
 
                 <select
                   style={styles.select}
+<<<<<<< HEAD
                   value={form.load_min}
                   onChange={(e) => setField("load_min", e.target.value)}
+=======
+                  value={form.weather_min}
+                  onChange={(e) => setField("weather_min", e.target.value)}
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                 >
                   {MINUTES.map((m) => (
                     <option key={m} value={m}>
@@ -1449,8 +1882,13 @@ await loadCustomerOrders(lockedCustomer);
 
                 <select
                   style={styles.select}
+<<<<<<< HEAD
                   value={form.load_ampm}
                   onChange={(e) => setField("load_ampm", e.target.value)}
+=======
+                  value={form.weather_ampm}
+                  onChange={(e) => setField("weather_ampm", e.target.value)}
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                 >
                   {AM_PM.map((a) => (
                     <option key={a} value={a}>
@@ -1460,6 +1898,7 @@ await loadCustomerOrders(lockedCustomer);
                 </select>
               </div>
             </div>
+<<<<<<< HEAD
 
             <div>
               <label style={styles.label}>Address</label>
@@ -1693,6 +2132,130 @@ await loadCustomerOrders(lockedCustomer);
             </button>
           </form>
         </div>
+=======
+          )}
+
+          <div>
+            <label style={styles.label}>Notes</label>
+            <textarea
+              style={styles.textarea}
+              value={form.notes}
+              onChange={(e) => setField("notes", e.target.value)}
+              placeholder="Special instructions"
+            />
+          </div>
+
+          <div>
+            <label style={styles.label}>Trucks Working</label>
+            <input
+              style={styles.input}
+              value={form.trucks_working}
+              onChange={(e) => setTrucksWorking(e.target.value)}
+              inputMode="numeric"
+              placeholder="ex: 4"
+            />
+          </div>
+
+          <div style={styles.modeWrap}>
+            <div>
+              <label style={styles.label}>Truck Timing Method</label>
+              <div style={styles.modeRow}>
+                <button
+                  type="button"
+                  style={
+                    form.truck_schedule_mode === "stagger"
+                      ? styles.btnSelected
+                      : styles.btnSecondary
+                  }
+                  onClick={() => setTruckScheduleMode("stagger")}
+                >
+                  1) Staggered
+                </button>
+
+                <button
+                  type="button"
+                  style={
+                    form.truck_schedule_mode === "designated"
+                      ? styles.btnSelected
+                      : styles.btnSecondary
+                  }
+                  onClick={() => setTruckScheduleMode("designated")}
+                >
+                  2) Designated Times
+                </button>
+              </div>
+            </div>
+
+            {form.truck_schedule_mode === "stagger" ? (
+              <div>
+                <label style={styles.label}>Stagger Minutes</label>
+                <input
+                  style={styles.input}
+                  value={form.stagger_minutes}
+                  onChange={(e) => setField("stagger_minutes", e.target.value)}
+                  inputMode="numeric"
+                  placeholder="ex: 15"
+                />
+              </div>
+            ) : (
+              <div style={styles.infoBox}>
+                <div style={{ fontWeight: 900, marginBottom: 6 }}>
+                  Designated Truck Times
+                </div>
+
+                <div style={styles.smallText}>
+                  Enter trucks working, then set each truck&apos;s exact start time.
+                </div>
+
+                <div
+                  style={{
+                    marginTop: 10,
+                    display: "flex",
+                    gap: 8,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <button
+                    type="button"
+                    style={styles.btnSecondary}
+                    onClick={openDesignatedTimes}
+                  >
+                    Set Designated Times
+                  </button>
+
+                  <div style={styles.smallText}>
+                    {truckCount > 0
+                      ? `${truckCount} truck${truckCount === 1 ? "" : "s"} selected`
+                      : "No trucks entered yet"}
+                  </div>
+                </div>
+
+                {truckCount > 0 && form.designated_times.length > 0 ? (
+                  <div style={{ marginTop: 10, display: "grid", gap: 4 }}>
+                    {form.designated_times.map((item, idx) => (
+                      <div key={idx} style={styles.smallText}>
+                        Truck {idx + 1}:{" "}
+                        <b>{formatPrettyTime(item.start_time) || "-"}</b>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            style={{
+              ...styles.btnPrimary,
+              opacity: canSubmit ? 1 : 0.5,
+            }}
+            disabled={!canSubmit}
+          >
+            Submit Order
+          </button>
+        </form>
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
 
         <div style={styles.ordersWrap}>
           <div style={styles.dateNavRow}>
@@ -2236,8 +2799,12 @@ await loadCustomerOrders(lockedCustomer);
                     </div>
 
                     <div style={styles.smallText}>
+<<<<<<< HEAD
                       Enter trucks working, then set each truck&apos;s exact start
                       time.
+=======
+                      Enter trucks working, then set each truck&apos;s exact start time.
+>>>>>>> 9615ae54642f6cb17002ccb7c827debc3efd8d78
                     </div>
 
                     <div
