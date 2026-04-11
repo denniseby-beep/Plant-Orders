@@ -1,5 +1,13 @@
 import { supabase } from "./supabaseClient";
 
+const EMPTY_ALLOWED = {
+  plantDashboard: false,
+  customerPortal: false,
+  managerDashboard: false,
+  jobTickets: false,
+  admin: false,
+};
+
 const EMPTY_ACCESS = {
   session: null,
   user: null,
@@ -9,7 +17,7 @@ const EMPTY_ACCESS = {
   customerAccount: null,
   userRoleRow: null,
   role: null,
-  allowed: [],
+  allowed: { ...EMPTY_ALLOWED },
   isAdmin: false,
   isManager: false,
   isOperator: false,
@@ -21,13 +29,23 @@ function normalizeRole(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function normalizeText(value) {
+  return String(value || "").trim();
+}
+
 function buildAccess(role) {
   const r = normalizeRole(role);
 
   switch (r) {
     case "admin":
       return {
-        allowed: ["admin", "internal", "manager", "customer"],
+        allowed: {
+          plantDashboard: true,
+          customerPortal: true,
+          managerDashboard: true,
+          jobTickets: true,
+          admin: true,
+        },
         isAdmin: true,
         isManager: false,
         isOperator: false,
@@ -37,7 +55,13 @@ function buildAccess(role) {
 
     case "manager":
       return {
-        allowed: ["internal", "manager"],
+        allowed: {
+          plantDashboard: true,
+          customerPortal: false,
+          managerDashboard: true,
+          jobTickets: true,
+          admin: false,
+        },
         isAdmin: false,
         isManager: true,
         isOperator: false,
@@ -47,7 +71,13 @@ function buildAccess(role) {
 
     case "operator":
       return {
-        allowed: ["internal"],
+        allowed: {
+          plantDashboard: true,
+          customerPortal: false,
+          managerDashboard: false,
+          jobTickets: true,
+          admin: false,
+        },
         isAdmin: false,
         isManager: false,
         isOperator: true,
@@ -55,9 +85,32 @@ function buildAccess(role) {
         isInternalReadOnly: false,
       };
 
+    case "customer":
+      return {
+        allowed: {
+          plantDashboard: false,
+          customerPortal: true,
+          managerDashboard: false,
+          jobTickets: true,
+          admin: false,
+        },
+        isAdmin: false,
+        isManager: false,
+        isOperator: false,
+        isCustomer: true,
+        isInternalReadOnly: false,
+      };
+
+    // backward compatibility
     case "internal":
       return {
-        allowed: ["internal"],
+        allowed: {
+          plantDashboard: true,
+          customerPortal: false,
+          managerDashboard: false,
+          jobTickets: true,
+          admin: false,
+        },
         isAdmin: false,
         isManager: false,
         isOperator: false,
@@ -67,7 +120,13 @@ function buildAccess(role) {
 
     case "internal_readonly":
       return {
-        allowed: ["internal"],
+        allowed: {
+          plantDashboard: true,
+          customerPortal: false,
+          managerDashboard: false,
+          jobTickets: true,
+          admin: false,
+        },
         isAdmin: false,
         isManager: false,
         isOperator: false,
@@ -75,19 +134,9 @@ function buildAccess(role) {
         isInternalReadOnly: true,
       };
 
-    case "customer":
-      return {
-        allowed: ["customer"],
-        isAdmin: false,
-        isManager: false,
-        isOperator: false,
-        isCustomer: true,
-        isInternalReadOnly: false,
-      };
-
     default:
       return {
-        allowed: [],
+        allowed: { ...EMPTY_ALLOWED },
         isAdmin: false,
         isManager: false,
         isOperator: false,
@@ -99,12 +148,23 @@ function buildAccess(role) {
 
 export function canAccess(role, target) {
   const r = normalizeRole(role);
-  const t = normalizeRole(target);
+  const t = String(target || "").trim();
 
   if (!r || !t) return false;
 
   const access = buildAccess(r);
-  return access.allowed.includes(t);
+  return !!access.allowed[t];
+}
+
+async function safeMaybeSingle(queryPromise, label) {
+  try {
+    const res = await queryPromise;
+    console.log(label, res?.data || null, res?.error || null);
+    return res?.data || null;
+  } catch (error) {
+    console.error(`${label} failed`, error);
+    return null;
+  }
 }
 
 export async function getAccessContext() {
@@ -129,30 +189,34 @@ export async function getAccessContext() {
 
     const user = session.user;
 
-    const [
-      profileRes,
-      internalRes,
-      customerUserRes,
-      userRolesRes,
-    ] = await Promise.all([
+    const profile = await safeMaybeSingle(
       supabase
         .from("user_profiles")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle(),
+      "profileRes"
+    );
 
+    const internalUser = await safeMaybeSingle(
       supabase
         .from("internal_users")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle(),
+      "internalRes"
+    );
 
+    const customerUser = await safeMaybeSingle(
       supabase
         .from("customer_users")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle(),
+      "customerUserRes"
+    );
 
+    const userRoleRow = await safeMaybeSingle(
       supabase
         .from("user_roles")
         .select("*")
@@ -160,87 +224,88 @@ export async function getAccessContext() {
         .eq("is_active", true)
         .limit(1)
         .maybeSingle(),
-    ]);
-
-    console.log("profileRes", profileRes?.data || null, profileRes?.error || null);
-    console.log("internalRes", internalRes?.data || null, internalRes?.error || null);
-    console.log(
-      "customerUserRes",
-      customerUserRes?.data || null,
-      customerUserRes?.error || null
+      "userRolesRes"
     );
-    console.log(
-      "userRolesRes",
-      userRolesRes?.data || null,
-      userRolesRes?.error || null
-    );
-
-    const profile = profileRes?.data || null;
-    const internalUser = internalRes?.data || null;
-    const customerUser = customerUserRes?.data || null;
-    const userRoleRow = userRolesRes?.data || null;
 
     let role = null;
     let customerAccount = null;
 
-    // 1) Old internal_users table still works first
-    if (internalUser?.is_active === false) {
-      console.log("internal user exists but is inactive");
-    } else if (internalUser?.role) {
-      role = normalizeRole(internalUser.role);
-    }
-
-    // 2) New user_roles table fallback
-    if (!role && userRoleRow?.role) {
+    // Priority:
+    // 1) user_roles
+    // 2) internal_users
+    // 3) customer_users
+    // 4) profile fallback
+    if (userRoleRow?.role) {
       role = normalizeRole(userRoleRow.role);
-    }
-
-    // 3) Old customer_users fallback
-    if (!role && customerUser) {
+    } else if (internalUser?.is_active !== false && internalUser?.role) {
+      role = normalizeRole(internalUser.role);
+    } else if (customerUser) {
       role = "customer";
+    } else if (profile?.role) {
+      role = normalizeRole(profile.role);
     }
 
-    // customer account lookup
     if (customerUser) {
       const customerId =
         customerUser.customer_account_id ??
         customerUser.customer_id ??
         null;
 
+      // 1) direct ID lookup
       if (customerId) {
-        const customerAccountRes = await supabase
-          .from("customer_accounts")
-          .select("*")
-          .eq("id", customerId)
-          .maybeSingle();
-
-        console.log(
-          "customerAccountRes",
-          customerAccountRes?.data || null,
-          customerAccountRes?.error || null
+        customerAccount = await safeMaybeSingle(
+          supabase
+            .from("customer_accounts")
+            .select("*")
+            .eq("id", customerId)
+            .maybeSingle(),
+          "customerAccountRes by ID"
         );
+      }
 
-        customerAccount = customerAccountRes?.data || null;
+      // 2) fallback by company_name on customer_users
+      if (!customerAccount && customerUser.company_name) {
+        customerAccount = await safeMaybeSingle(
+          supabase
+            .from("customer_accounts")
+            .select("*")
+            .eq("company_name", customerUser.company_name)
+            .maybeSingle(),
+          "customerAccountRes by customerUser.company_name"
+        );
+      }
+
+      // 3) fallback by email on customer_accounts if that exists in your table
+      if (!customerAccount && user.email) {
+        customerAccount = await safeMaybeSingle(
+          supabase
+            .from("customer_accounts")
+            .select("*")
+            .eq("email", user.email)
+            .maybeSingle(),
+          "customerAccountRes by email"
+        );
       }
     }
 
-    // if role says customer but old customer_users row does not exist yet,
-    // try to match customer account by company name from profile
+    // 4) fallback by company_name from profile
     if (!customerAccount && role === "customer" && profile?.company_name) {
-      const customerAccountRes = await supabase
-        .from("customer_accounts")
-        .select("*")
-        .eq("company_name", profile.company_name)
-        .maybeSingle();
-
-      console.log(
-        "customerAccountRes by profile company",
-        customerAccountRes?.data || null,
-        customerAccountRes?.error || null
+      customerAccount = await safeMaybeSingle(
+        supabase
+          .from("customer_accounts")
+          .select("*")
+          .eq("company_name", profile.company_name)
+          .maybeSingle(),
+        "customerAccountRes by profile company"
       );
-
-      customerAccount = customerAccountRes?.data || null;
     }
+
+    // 5) final fallback: use customerAccount-linked company name from profile/customerUser
+    const resolvedCompanyName =
+      normalizeText(customerAccount?.company_name) ||
+      normalizeText(profile?.company_name) ||
+      normalizeText(customerUser?.company_name) ||
+      "";
 
     const access = buildAccess(role);
 
@@ -250,7 +315,15 @@ export async function getAccessContext() {
       profile,
       internalUser,
       customerUser,
-      customerAccount,
+      customerAccount: customerAccount
+        ? {
+            ...customerAccount,
+            company_name:
+              normalizeText(customerAccount.company_name) || resolvedCompanyName,
+          }
+        : resolvedCompanyName
+        ? { company_name: resolvedCompanyName }
+        : null,
       userRoleRow,
       role,
       allowed: access.allowed,

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { getAccessContext, canAccess } from "./authGuard";
+import { supabase } from "./supabaseClient";
+import { getAccessContext } from "./authGuard";
 
 import Home from "./Home";
 import InternalApp from "./InternalApp";
@@ -8,6 +9,15 @@ import CustomerPortal from "./CustomerPortal";
 import ResetPassword from "./ResetPassword";
 import ManagerDashboard from "./ManagerDashboard";
 import JobUpdates from "./JobUpdates";
+import JobTickets from "./JobTickets";
+
+const EMPTY_ALLOWED = {
+  plantDashboard: false,
+  customerPortal: false,
+  managerDashboard: false,
+  jobTickets: false,
+  admin: false,
+};
 
 const EMPTY_ACCESS = {
   session: null,
@@ -18,7 +28,7 @@ const EMPTY_ACCESS = {
   customerAccount: null,
   userRoleRow: null,
   role: null,
-  allowed: [],
+  allowed: { ...EMPTY_ALLOWED },
   isAdmin: false,
   isManager: false,
   isOperator: false,
@@ -32,42 +42,85 @@ function normalizePath(pathname) {
   return raw.endsWith("/") && raw !== "/" ? raw.slice(0, -1) : raw;
 }
 
-function redirectToHome(access) {
-  window.history.replaceState({}, "", "/");
-  return <Home access={access} />;
+function getDefaultRoute(access) {
+  if (access?.allowed?.admin) return "/admin";
+  if (access?.allowed?.managerDashboard) return "/manager";
+  if (access?.allowed?.customerPortal) return "/customer";
+  if (access?.allowed?.plantDashboard) return "/internal";
+  return "/";
+}
+
+function redirectToPath(path) {
+  const nextPath = path || "/";
+  if (normalizePath(window.location.pathname) !== normalizePath(nextPath)) {
+    window.history.replaceState({}, "", nextPath);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }
+  return null;
+}
+
+function withTimeout(promise, ms = 4000) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
+    ),
+  ]);
 }
 
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [access, setAccess] = useState(EMPTY_ACCESS);
+  const [currentPath, setCurrentPath] = useState(
+    normalizePath(window.location.pathname)
+  );
 
   useEffect(() => {
     let cancelled = false;
 
-    async function init() {
+    async function loadAccess() {
       try {
-        const result = await getAccessContext();
+        console.log("App loadAccess started");
+        const result = await withTimeout(getAccessContext(), 4000);
         if (cancelled) return;
+        console.log("App loadAccess success", result);
         setAccess(result || EMPTY_ACCESS);
       } catch (error) {
-        console.error("App init failed", error);
+        console.error("App loadAccess failed", error);
         if (cancelled) return;
         setAccess(EMPTY_ACCESS);
-      }
-
-      if (!cancelled) {
-        setLoading(false);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
-    init();
+    loadAccess();
+
+    const handlePopState = () => {
+      setCurrentPath(normalizePath(window.location.pathname));
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event) => {
+      console.log("Auth state changed:", _event);
+
+      loadAccess();
+      setCurrentPath(normalizePath(window.location.pathname));
+    });
+
+    window.addEventListener("popstate", handlePopState);
 
     return () => {
       cancelled = true;
+      subscription.unsubscribe();
+      window.removeEventListener("popstate", handlePopState);
     };
   }, []);
 
-  const path = normalizePath(window.location.pathname);
+  const path = currentPath;
   const isSignedIn = !!access.session;
 
   if (loading) {
@@ -78,17 +131,17 @@ export default function App() {
     );
   }
 
-  if (path === "/") {
-    return <Home access={access} />;
-  }
-
   if (path === "/customer/reset-password") {
     return <ResetPassword />;
   }
 
+  if (path === "/") {
+    return <Home access={access} />;
+  }
+
   if (path === "/customer") {
-    if (!isSignedIn || !canAccess(access.role, "customer")) {
-      return redirectToHome(access);
+    if (!isSignedIn || !access.allowed.customerPortal) {
+      return redirectToPath(getDefaultRoute(access));
     }
 
     return (
@@ -102,16 +155,16 @@ export default function App() {
   }
 
   if (path === "/admin") {
-    if (!isSignedIn || !canAccess(access.role, "admin")) {
-      return redirectToHome(access);
+    if (!isSignedIn || !access.allowed.admin) {
+      return redirectToPath(getDefaultRoute(access));
     }
 
     return <AdminPage access={access} role={access.role} />;
   }
 
   if (path === "/internal") {
-    if (!isSignedIn || !canAccess(access.role, "internal")) {
-      return redirectToHome(access);
+    if (!isSignedIn || !access.allowed.plantDashboard) {
+      return redirectToPath(getDefaultRoute(access));
     }
 
     return (
@@ -124,23 +177,28 @@ export default function App() {
   }
 
   if (path === "/manager") {
-    if (!isSignedIn || !canAccess(access.role, "manager")) {
-      return redirectToHome(access);
+    if (!isSignedIn || !access.allowed.managerDashboard) {
+      return redirectToPath(getDefaultRoute(access));
     }
 
     return <ManagerDashboard access={access} role={access.role} />;
   }
 
   if (path === "/jobupdates") {
-    if (
-      !isSignedIn ||
-      !(canAccess(access.role, "customer") || canAccess(access.role, "manager"))
-    ) {
-      return redirectToHome(access);
+    if (!isSignedIn || !access.allowed.customerPortal) {
+      return redirectToPath(getDefaultRoute(access));
     }
 
     return <JobUpdates access={access} role={access.role} />;
   }
 
-  return redirectToHome(access);
+  if (path === "/job-tickets") {
+    if (!isSignedIn || !access.allowed.jobTickets) {
+      return redirectToPath(getDefaultRoute(access));
+    }
+
+    return <JobTickets access={access} role={access.role} />;
+  }
+
+  return redirectToPath(getDefaultRoute(access));
 }
