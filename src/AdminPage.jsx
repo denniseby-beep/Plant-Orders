@@ -2,6 +2,7 @@ import React from "react";
 import { supabase } from "./supabaseClient";
 import AdminDashboard from "./AdminDashboard";
 import CustomerAccountManager from "./CustomerAccountManager";
+import LogoutButton from "./LogoutButton";
 
 export default function AdminPage({ access, role }) {
   async function handleSignOut() {
@@ -29,9 +30,7 @@ export default function AdminPage({ access, role }) {
           Logged in as <strong>{access?.user?.email || "Admin"}</strong>
         </div>
 
-        <button onClick={handleSignOut} style={buttonStyle}>
-          Sign Out
-        </button>
+        <LogoutButton />
       </div>
 
       <AdminDashboard />

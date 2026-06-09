@@ -136,24 +136,24 @@ export default function Home({ access }) {
   }
 
   async function handleLogin(e) {
-  e.preventDefault();
-  setLoggingIn(true);
-  setLoginError("");
+    e.preventDefault();
+    setLoggingIn(true);
+    setLoginError("");
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email.trim(),
-    password,
-  });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
 
-  if (error) {
-    setLoginError(error.message || "Could not sign in.");
-  } else {
-    setEmail("");
-    setPassword("");
+    if (error) {
+      setLoginError(error.message || "Could not sign in.");
+    } else {
+      setEmail("");
+      setPassword("");
+    }
+
+    setLoggingIn(false);
   }
-
-  setLoggingIn(false);
-}
 
   async function handleLogout() {
     try {
@@ -220,7 +220,6 @@ export default function Home({ access }) {
             onClick={() => {
               if (!uploading) fileInputRef.current?.click();
             }}
-            title="Tap to change plant photo"
           >
             {loadingPhoto ? (
               <div style={placeholderStyle}>Loading photo...</div>
@@ -260,7 +259,7 @@ export default function Home({ access }) {
                     navigateTo("/customer", access?.allowed?.customerPortal)
                   }
                 >
-                  Open Customer Portal
+                  Customer Portal
                 </button>
               )}
 
@@ -271,7 +270,18 @@ export default function Home({ access }) {
                     navigateTo("/internal", access?.allowed?.plantDashboard)
                   }
                 >
-                  Open Plant Dashboard
+                  Plant Dashboard
+                </button>
+              )}
+
+              {access?.allowed?.plantDashboard && (
+                <button
+                  style={primaryActionButtonStyle}
+                  onClick={() =>
+                    navigateTo("/dispatch", access?.allowed?.plantDashboard)
+                  }
+                >
+                  Dispatch Board
                 </button>
               )}
 
@@ -282,7 +292,7 @@ export default function Home({ access }) {
                     navigateTo("/manager", access?.allowed?.managerDashboard)
                   }
                 >
-                  Open Manager Dashboard
+                  Manager Dashboard
                 </button>
               )}
 
@@ -293,16 +303,42 @@ export default function Home({ access }) {
                     navigateTo("/job-tickets", access?.allowed?.jobTickets)
                   }
                 >
-                  Open Job-Tickets
+                  Plant Tickets
                 </button>
               )}
+
+              {access?.allowed?.yardTickets && (
+                <button
+                  style={primaryActionButtonStyle}
+                  onClick={() =>
+                    navigateTo("/yard-tickets", access?.allowed?.yardTickets)
+                  }
+                >
+                  Yard Tickets
+                </button>
+              )}
+
+              <button
+  onClick={() => (window.location.href = "/job-reports")}
+  style={{
+    padding: "12px 18px",
+    borderRadius: 8,
+    border: "none",
+    background: "#b91c1c",
+    color: "#fff",
+    fontWeight: "bold",
+    cursor: "pointer",
+  }}
+>
+  Job Reports
+</button>
 
               {access?.allowed?.admin && (
                 <button
                   style={primaryActionButtonStyle}
                   onClick={() => navigateTo("/admin", access?.allowed?.admin)}
                 >
-                  Open Admin
+                  Administrator Panel
                 </button>
               )}
             </div>
@@ -333,11 +369,7 @@ export default function Home({ access }) {
               style={inputStyle}
             />
 
-            <button
-              type="submit"
-              disabled={loggingIn}
-              style={loginButtonStyle}
-            >
+            <button type="submit" disabled={loggingIn} style={loginButtonStyle}>
               {loggingIn ? "Signing In..." : "Sign In"}
             </button>
 

@@ -1,50 +1,120 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "./supabaseClient";
+import VendorManager from "./VendorManager";
+import AccountingExports from "./AccountingExports";
+
+const theme = {
+  pageBg: "#111827",
+  panelBg: "#1f2937",
+  panelBorder: "#374151",
+  panelShadow: "0 10px 30px rgba(0,0,0,0.28)",
+
+  text: "#f9fafb",
+  textSoft: "#cbd5e1",
+  textMuted: "#94a3b8",
+
+  inputBg: "#0f172a",
+  inputBorder: "#475569",
+  inputText: "#f8fafc",
+  inputPlaceholder: "#94a3b8",
+
+  buttonBg: "#0f766e",
+  buttonBorder: "#0f766e",
+  buttonText: "#ffffff",
+
+  secondaryBg: "#111827",
+  secondaryBorder: "#475569",
+  secondaryText: "#e5e7eb",
+
+  activeTabBg: "#0b3b36",
+  activeTabBorder: "#14b8a6",
+  activeTabText: "#f0fdfa",
+
+  tableBg: "#111827",
+  tableHeaderBg: "#0f172a",
+  tableBorder: "#334155",
+  rowAlt: "#172131",
+
+  successText: "#86efac",
+  errorText: "#fca5a5",
+};
 
 const cardStyle = {
-  background: "#fff",
-  border: "1px solid #ddd",
-  borderRadius: 10,
-  padding: 16,
+  background: theme.panelBg,
+  border: `1px solid ${theme.panelBorder}`,
+  borderRadius: 14,
+  padding: 18,
   marginBottom: 18,
-  boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
+  boxShadow: theme.panelShadow,
 };
 
 const inputStyle = {
-  padding: "10px 12px",
-  border: "1px solid #ccc",
-  borderRadius: 8,
+  padding: "11px 12px",
+  border: `1px solid ${theme.inputBorder}`,
+  borderRadius: 10,
   width: "100%",
   boxSizing: "border-box",
+  background: theme.inputBg,
+  color: theme.inputText,
+  fontSize: 15,
+  outline: "none",
 };
 
 const buttonStyle = {
   padding: "10px 16px",
-  borderRadius: 8,
-  border: "1px solid #0099ff",
-  background: "#0099ff",
-  color: "#fff",
-  fontWeight: 600,
+  borderRadius: 10,
+  border: `1px solid ${theme.buttonBorder}`,
+  background: theme.buttonBg,
+  color: theme.buttonText,
+  fontWeight: 700,
   cursor: "pointer",
+  fontSize: 14,
 };
 
 const secondaryButtonStyle = {
   padding: "10px 16px",
-  borderRadius: 8,
-  border: "1px solid #666",
-  background: "#fff",
-  color: "#444",
-  fontWeight: 600,
+  borderRadius: 10,
+  border: `1px solid ${theme.secondaryBorder}`,
+  background: theme.secondaryBg,
+  color: theme.secondaryText,
+  fontWeight: 700,
   cursor: "pointer",
+  fontSize: 14,
 };
 
-const tableOuter = { overflowX: "auto" };
-const tableStyle = { width: "100%", borderCollapse: "collapse", minWidth: 850 };
-const thTd = {
+const tableOuter = {
+  overflowX: "auto",
+  borderRadius: 12,
+  border: `1px solid ${theme.tableBorder}`,
+};
+
+const tableStyle = {
+  width: "100%",
+  borderCollapse: "collapse",
+  minWidth: 850,
+  background: theme.tableBg,
+};
+
+const thStyle = {
   textAlign: "left",
-  padding: "10px 8px",
-  borderBottom: "1px solid #eee",
+  padding: "12px 10px",
+  borderBottom: `1px solid ${theme.tableBorder}`,
   verticalAlign: "top",
+  background: theme.tableHeaderBg,
+  color: theme.text,
+  fontSize: 13,
+  fontWeight: 800,
+  letterSpacing: 0.2,
+  whiteSpace: "nowrap",
+};
+
+const tdStyle = {
+  textAlign: "left",
+  padding: "12px 10px",
+  borderBottom: `1px solid ${theme.tableBorder}`,
+  verticalAlign: "top",
+  color: theme.textSoft,
+  fontSize: 14,
 };
 
 function statusBadge(active) {
@@ -53,11 +123,11 @@ function statusBadge(active) {
       style={{
         display: "inline-block",
         padding: "4px 9px",
-        borderRadius: 6,
+        borderRadius: 999,
         fontSize: 12,
-        fontWeight: 700,
-        color: active ? "#065f46" : "#831843",
-        background: active ? "#d1fae5" : "#fee2e2",
+        fontWeight: 800,
+        color: active ? "#052e16" : "#7f1d1d",
+        background: active ? "#86efac" : "#fecaca",
       }}
     >
       {active ? "Active" : "Inactive"}
@@ -70,6 +140,57 @@ function formatDt(value) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleString();
+}
+
+function SectionTitle({ title, subtitle, right }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        gap: 12,
+        flexWrap: "wrap",
+        marginBottom: 10,
+      }}
+    >
+      <div>
+        <h2 style={{ margin: 0, color: theme.text, fontSize: 24 }}>{title}</h2>
+        {subtitle ? (
+          <p style={{ color: theme.textMuted, marginTop: 6, marginBottom: 0 }}>
+            {subtitle}
+          </p>
+        ) : null}
+      </div>
+      {right}
+    </div>
+  );
+}
+
+function MessageBlock({ message, error }) {
+  return (
+    <>
+      {message ? (
+        <p style={{ color: theme.successText, marginTop: 10, marginBottom: 0, fontWeight: 700 }}>
+          {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p style={{ color: theme.errorText, marginTop: 10, marginBottom: 0, fontWeight: 700 }}>
+          {error}
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div style={{ display: "grid", gap: 6 }}>
+      <label style={{ color: theme.textSoft, fontSize: 13, fontWeight: 700 }}>{label}</label>
+      {children}
+    </div>
+  );
 }
 
 function CustomersTab() {
@@ -193,8 +314,15 @@ function CustomersTab() {
   return (
     <div>
       <div style={cardStyle}>
-        <h2>Customers</h2>
-        <p style={{ color: "#475569", marginTop: 0 }}>Manage customer records.</p>
+        <SectionTitle
+          title="Customers"
+          subtitle="Manage customer records."
+          right={
+            <button type="button" onClick={loadCustomers} style={secondaryButtonStyle}>
+              Refresh
+            </button>
+          }
+        />
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <input
@@ -203,9 +331,6 @@ function CustomersTab() {
             onChange={(e) => setSearch(e.target.value)}
             style={{ ...inputStyle, maxWidth: 320 }}
           />
-          <button type="button" onClick={loadCustomers} style={secondaryButtonStyle}>
-            Refresh
-          </button>
         </div>
 
         <form
@@ -223,8 +348,7 @@ function CustomersTab() {
           </button>
         </form>
 
-        {msg && <p style={{ color: "#065f46", marginTop: 10 }}>{msg}</p>}
-        {err && <p style={{ color: "#b91c1c", marginTop: 10 }}>{err}</p>}
+        <MessageBlock message={msg} error={err} />
       </div>
 
       <div style={cardStyle}>
@@ -232,16 +356,16 @@ function CustomersTab() {
           <table style={tableStyle}>
             <thead>
               <tr>
-                <th style={thTd}>Name</th>
-                <th style={thTd}>Status</th>
-                <th style={thTd}>Created</th>
-                <th style={thTd}>Actions</th>
+                <th style={thStyle}>Name</th>
+                <th style={thStyle}>Status</th>
+                <th style={thStyle}>Created</th>
+                <th style={thStyle}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={4} style={thTd}>
+                  <td colSpan={4} style={tdStyle}>
                     Loading...
                   </td>
                 </tr>
@@ -249,39 +373,36 @@ function CustomersTab() {
 
               {!loading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} style={thTd}>
+                  <td colSpan={4} style={tdStyle}>
                     No customers found.
                   </td>
                 </tr>
               )}
 
               {!loading &&
-                filtered.map((c) => (
-                  <tr key={c.id}>
-                    <td style={{ ...thTd, color: "#000", fontWeight: 700 }}>
+                filtered.map((c, index) => (
+                  <tr
+                    key={c.id}
+                    style={{ background: index % 2 === 0 ? theme.tableBg : theme.rowAlt }}
+                  >
+                    <td style={{ ...tdStyle, color: theme.text, fontWeight: 700 }}>
                       {editId === c.id ? (
                         <input
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          style={{ ...inputStyle, color: "#000", backgroundColor: "#fff" }}
+                          style={inputStyle}
                         />
                       ) : (
-                        <span style={{ color: "#000", fontWeight: 700 }}>
-                          {c.name || "(empty)"}
-                        </span>
+                        c.name || "(empty)"
                       )}
                     </td>
-                    <td style={{ ...thTd, color: "#000" }}>{statusBadge(c.is_active)}</td>
-                    <td style={{ ...thTd, color: "#000" }}>{formatDt(c.created_at)}</td>
-                    <td style={thTd}>
+                    <td style={tdStyle}>{statusBadge(c.is_active)}</td>
+                    <td style={tdStyle}>{formatDt(c.created_at)}</td>
+                    <td style={tdStyle}>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         {editId === c.id ? (
                           <>
-                            <button
-                              type="button"
-                              onClick={() => saveCustomer(c.id)}
-                              style={secondaryButtonStyle}
-                            >
+                            <button type="button" onClick={() => saveCustomer(c.id)} style={buttonStyle}>
                               Save
                             </button>
                             <button
@@ -500,30 +621,22 @@ function JobsTab() {
   return (
     <div>
       <div style={cardStyle}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 8,
-            flexWrap: "wrap",
-          }}
-        >
-          <h2 style={{ margin: 0 }}>Jobs</h2>
-          <button
-            type="button"
-            onClick={() => {
-              loadJobs();
-              loadActiveCustomers();
-            }}
-            style={secondaryButtonStyle}
-          >
-            Refresh
-          </button>
-        </div>
-
-        <p style={{ color: "#475569", marginTop: 4 }}>
-          Manage jobs for active customers.
-        </p>
+        <SectionTitle
+          title="Jobs"
+          subtitle="Manage jobs for active customers."
+          right={
+            <button
+              type="button"
+              onClick={() => {
+                loadJobs();
+                loadActiveCustomers();
+              }}
+              style={secondaryButtonStyle}
+            >
+              Refresh
+            </button>
+          }
+        />
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
           <input
@@ -543,8 +656,7 @@ function JobsTab() {
             gap: 10,
           }}
         >
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Customer *</label>
+          <Field label="Customer *">
             <select
               value={form.customer_name}
               onChange={(e) => setField("customer_name", e.target.value)}
@@ -560,56 +672,50 @@ function JobsTab() {
                   </option>
                 ))}
             </select>
-          </div>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Job Number *</label>
+          <Field label="Job Number *">
             <input
               value={form.job_number}
               onChange={(e) => setField("job_number", e.target.value)}
               style={inputStyle}
               required
             />
-          </div>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Job Name</label>
+          <Field label="Job Name">
             <input
               value={form.job_name}
               onChange={(e) => setField("job_name", e.target.value)}
               style={inputStyle}
             />
-          </div>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Address</label>
+          <Field label="Address">
             <input
               value={form.address}
               onChange={(e) => setField("address", e.target.value)}
               style={inputStyle}
             />
-          </div>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Site Contact Name</label>
+          <Field label="Site Contact Name">
             <input
               value={form.site_contact_name}
               onChange={(e) => setField("site_contact_name", e.target.value)}
               style={inputStyle}
             />
-          </div>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Site Contact Phone</label>
+          <Field label="Site Contact Phone">
             <input
               value={form.site_contact_phone}
               onChange={(e) => setField("site_contact_phone", e.target.value)}
               style={inputStyle}
             />
-          </div>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Status</label>
+          <Field label="Status">
             <select
               value={form.is_active ? "active" : "inactive"}
               onChange={(e) => setField("is_active", e.target.value === "active")}
@@ -618,9 +724,9 @@ function JobsTab() {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
-          </div>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5, alignSelf: "end" }}>
+          <div style={{ display: "grid", gap: 6, alignSelf: "end" }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button type="submit" style={buttonStyle}>
                 {editing ? "Update Job" : "Add Job"}
@@ -644,8 +750,7 @@ function JobsTab() {
           </div>
         </form>
 
-        {message && <p style={{ color: "#065f46", marginTop: 10 }}>{message}</p>}
-        {error && <p style={{ color: "#b91c1c", marginTop: 10 }}>{error}</p>}
+        <MessageBlock message={message} error={error} />
       </div>
 
       <div style={cardStyle}>
@@ -653,20 +758,20 @@ function JobsTab() {
           <table style={tableStyle}>
             <thead>
               <tr>
-                <th style={thTd}>Customer</th>
-                <th style={thTd}>Job #</th>
-                <th style={thTd}>Job Name</th>
-                <th style={thTd}>Address</th>
-                <th style={thTd}>Site Contact</th>
-                <th style={thTd}>Status</th>
-                <th style={thTd}>Created</th>
-                <th style={thTd}>Actions</th>
+                <th style={thStyle}>Customer</th>
+                <th style={thStyle}>Job #</th>
+                <th style={thStyle}>Job Name</th>
+                <th style={thStyle}>Address</th>
+                <th style={thStyle}>Site Contact</th>
+                <th style={thStyle}>Status</th>
+                <th style={thStyle}>Created</th>
+                <th style={thStyle}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loadingJobs && (
                 <tr>
-                  <td colSpan={8} style={thTd}>
+                  <td colSpan={8} style={tdStyle}>
                     Loading jobs...
                   </td>
                 </tr>
@@ -674,32 +779,31 @@ function JobsTab() {
 
               {!loadingJobs && filteredJobs.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={thTd}>
+                  <td colSpan={8} style={tdStyle}>
                     No jobs found.
                   </td>
                 </tr>
               )}
 
               {!loadingJobs &&
-                filteredJobs.map((job) => (
-                  <tr key={job.id}>
-                    <td style={thTd}>{job.customer_name}</td>
-                    <td style={thTd}>{job.job_number}</td>
-                    <td style={thTd}>{job.job_name}</td>
-                    <td style={thTd}>{job.address}</td>
-                    <td style={thTd}>
+                filteredJobs.map((job, index) => (
+                  <tr
+                    key={job.id}
+                    style={{ background: index % 2 === 0 ? theme.tableBg : theme.rowAlt }}
+                  >
+                    <td style={tdStyle}>{job.customer_name}</td>
+                    <td style={tdStyle}>{job.job_number}</td>
+                    <td style={tdStyle}>{job.job_name}</td>
+                    <td style={tdStyle}>{job.address}</td>
+                    <td style={tdStyle}>
                       {job.site_contact_name}
                       {job.site_contact_phone ? ` (${job.site_contact_phone})` : ""}
                     </td>
-                    <td style={thTd}>{statusBadge(job.is_active)}</td>
-                    <td style={thTd}>{formatDt(job.created_at)}</td>
-                    <td style={thTd}>
+                    <td style={tdStyle}>{statusBadge(job.is_active)}</td>
+                    <td style={tdStyle}>{formatDt(job.created_at)}</td>
+                    <td style={tdStyle}>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <button
-                          type="button"
-                          onClick={() => startEdit(job)}
-                          style={secondaryButtonStyle}
-                        >
+                        <button type="button" onClick={() => startEdit(job)} style={secondaryButtonStyle}>
                           Edit
                         </button>
                         <button
@@ -843,24 +947,15 @@ function MixesTab() {
   return (
     <div>
       <div style={cardStyle}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 8,
-            flexWrap: "wrap",
-          }}
-        >
-          <h2 style={{ margin: 0 }}>Mixes / Products</h2>
-          <button type="button" onClick={loadMixes} style={secondaryButtonStyle}>
-            Refresh
-          </button>
-        </div>
-
-        <p style={{ color: "#475569", marginTop: 4 }}>
-          Manage product mixes used for jobs.
-        </p>
+        <SectionTitle
+          title="Mixes / Products"
+          subtitle="Manage product mixes used for jobs."
+          right={
+            <button type="button" onClick={loadMixes} style={secondaryButtonStyle}>
+              Refresh
+            </button>
+          }
+        />
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
           <input
@@ -886,8 +981,7 @@ function MixesTab() {
           </button>
         </form>
 
-        {message && <p style={{ color: "#065f46", marginTop: 10 }}>{message}</p>}
-        {error && <p style={{ color: "#b91c1c", marginTop: 10 }}>{error}</p>}
+        <MessageBlock message={message} error={error} />
       </div>
 
       <div style={cardStyle}>
@@ -895,16 +989,16 @@ function MixesTab() {
           <table style={tableStyle}>
             <thead>
               <tr>
-                <th style={thTd}>Name</th>
-                <th style={thTd}>Status</th>
-                <th style={thTd}>Created</th>
-                <th style={thTd}>Actions</th>
+                <th style={thStyle}>Name</th>
+                <th style={thStyle}>Status</th>
+                <th style={thStyle}>Created</th>
+                <th style={thStyle}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={4} style={thTd}>
+                  <td colSpan={4} style={tdStyle}>
                     Loading...
                   </td>
                 </tr>
@@ -912,16 +1006,19 @@ function MixesTab() {
 
               {!loading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} style={thTd}>
+                  <td colSpan={4} style={tdStyle}>
                     No mixes found.
                   </td>
                 </tr>
               )}
 
               {!loading &&
-                filtered.map((mix) => (
-                  <tr key={mix.id}>
-                    <td style={thTd}>
+                filtered.map((mix, index) => (
+                  <tr
+                    key={mix.id}
+                    style={{ background: index % 2 === 0 ? theme.tableBg : theme.rowAlt }}
+                  >
+                    <td style={tdStyle}>
                       {editId === mix.id ? (
                         <input
                           value={editName}
@@ -929,20 +1026,16 @@ function MixesTab() {
                           style={inputStyle}
                         />
                       ) : (
-                        mix.name
+                        <span style={{ color: theme.text }}>{mix.name}</span>
                       )}
                     </td>
-                    <td style={thTd}>{statusBadge(mix.is_active)}</td>
-                    <td style={thTd}>{formatDt(mix.created_at)}</td>
-                    <td style={thTd}>
+                    <td style={tdStyle}>{statusBadge(mix.is_active)}</td>
+                    <td style={tdStyle}>{formatDt(mix.created_at)}</td>
+                    <td style={tdStyle}>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         {editId === mix.id ? (
                           <>
-                            <button
-                              type="button"
-                              onClick={() => saveMix(mix.id)}
-                              style={secondaryButtonStyle}
-                            >
+                            <button type="button" onClick={() => saveMix(mix.id)} style={buttonStyle}>
                               Save
                             </button>
                             <button
@@ -1094,26 +1187,39 @@ function AccountsTab() {
       if (sessionError) throw sessionError;
       if (!session?.access_token) throw new Error("Login required");
 
-      const functionName =
-  role === "customer" ? "create-customer-account" : "create-internal-user";
+      const cleanRole = String(role || "")
+  .trim()
+  .toLowerCase();
 
-const { data, error: fnErr } = await supabase.functions.invoke(
-  functionName,
-        {
-          body: {
-            company_name: cName,
-            full_name: cContact,
-            email: cEmail,
-            password: cPassword,
-            phone: cPhone,
-            role,
-            can_edit_unacknowledged: canEditUnacknowledged,
-          },
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        }
-      );
+const internalRoles = [
+  "admin",
+  "manager",
+  "project_manager",
+  "operator",
+  "yard",
+];
+
+const functionName = internalRoles.includes(cleanRole)
+  ? "create-internal-user"
+  : "create-customer-account";
+
+  console.log("Creating account with role:", cleanRole);
+console.log("Calling function:", functionName);
+
+      const { data, error: fnErr } = await supabase.functions.invoke(functionName, {
+        body: {
+          company_name: cName,
+          full_name: cContact,
+          email: cEmail,
+          password: cPassword,
+          phone: cPhone,
+          role: cleanRole,
+          can_edit_unacknowledged: canEditUnacknowledged,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
       if (fnErr) {
         throw fnErr;
@@ -1123,7 +1229,11 @@ const { data, error: fnErr } = await supabase.functions.invoke(
         throw new Error(data.error);
       }
 
-      setMessage("Customer account created. Customer can log in immediately.");
+      setMessage(
+  internalRoles.includes(cleanRole)
+    ? "Internal account created. User can log in immediately."
+    : "Customer account created. Customer can log in immediately."
+);
       setCompanyName("");
       setContactName("");
       setEmail("");
@@ -1136,7 +1246,7 @@ const { data, error: fnErr } = await supabase.functions.invoke(
       await loadCompanySuggestions();
     } catch (e) {
       console.error("createAccount", e);
-      setError(e.message || "Failed to create customer account");
+      setError(e.message || "Failed to create account");
     } finally {
       setSaving(false);
     }
@@ -1187,24 +1297,15 @@ const { data, error: fnErr } = await supabase.functions.invoke(
   return (
     <div>
       <div style={cardStyle}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 8,
-            flexWrap: "wrap",
-          }}
-        >
-          <h2 style={{ margin: 0 }}>Customer Accounts</h2>
-          <button type="button" onClick={loadAccounts} style={secondaryButtonStyle}>
-            Refresh
-          </button>
-        </div>
-
-        <p style={{ color: "#475569", marginTop: 4 }}>
-          Create and manage customer account logins.
-        </p>
+        <SectionTitle
+          title="Customer Accounts"
+          subtitle="Create and manage customer account logins."
+          right={
+            <button type="button" onClick={loadAccounts} style={secondaryButtonStyle}>
+              Refresh
+            </button>
+          }
+        />
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
           <input
@@ -1224,8 +1325,7 @@ const { data, error: fnErr } = await supabase.functions.invoke(
             gap: 10,
           }}
         >
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Company Name</label>
+          <Field label="Company Name">
             <input
               list="company-options"
               value={companyName}
@@ -1238,20 +1338,18 @@ const { data, error: fnErr } = await supabase.functions.invoke(
                 <option key={name} value={name} />
               ))}
             </datalist>
-          </div>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Contact Name</label>
+          <Field label="Contact Name">
             <input
               value={contactName}
               onChange={(e) => setContactName(e.target.value)}
               style={inputStyle}
               required
             />
-          </div>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Email</label>
+          <Field label="Email">
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -1259,10 +1357,9 @@ const { data, error: fnErr } = await supabase.functions.invoke(
               type="email"
               required
             />
-          </div>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Password</label>
+          <Field label="Password">
             <input
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -1270,32 +1367,33 @@ const { data, error: fnErr } = await supabase.functions.invoke(
               type="password"
               required
             />
-          </div>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Phone</label>
+          <Field label="Phone">
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               style={inputStyle}
             />
-          </div>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Role</label>
+          <Field label="Role">
             <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              style={inputStyle}
-            >
-              <option value="customer">customer</option>
-              <option value="dispatcher">dispatcher</option>
-              <option value="admin">admin</option>
-            </select>
-          </div>
+  value={role}
+  onChange={(e) => setRole(e.target.value)}
+  style={inputStyle}
+>
+  <option value="customer">Customer</option>
+  <option value="dispatcher">Dispatcher</option>
+  <option value="yard">Yard</option>
+  <option value="operator">Operator</option>
+  <option value="manager">Manager</option>
+  <option value="project_manager">Project Manager</option>
+  <option value="admin">Administrator</option>
+</select>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5 }}>
-            <label>Can Edit Unacknowledged</label>
+          <Field label="Can Edit Unacknowledged">
             <select
               value={canEditUnacknowledged ? "true" : "false"}
               onChange={(e) => setCanEditUnacknowledged(e.target.value === "true")}
@@ -1304,17 +1402,16 @@ const { data, error: fnErr } = await supabase.functions.invoke(
               <option value="true">True</option>
               <option value="false">False</option>
             </select>
-          </div>
+          </Field>
 
-          <div style={{ display: "grid", gap: 5, alignSelf: "end" }}>
+          <div style={{ display: "grid", gap: 6, alignSelf: "end" }}>
             <button type="submit" disabled={saving} style={buttonStyle}>
               {saving ? "Saving..." : "Create Account"}
             </button>
           </div>
         </form>
 
-        {message && <p style={{ color: "#065f46", marginTop: 10 }}>{message}</p>}
-        {error && <p style={{ color: "#b91c1c", marginTop: 10 }}>{error}</p>}
+        <MessageBlock message={message} error={error} />
       </div>
 
       <div style={cardStyle}>
@@ -1322,22 +1419,22 @@ const { data, error: fnErr } = await supabase.functions.invoke(
           <table style={tableStyle}>
             <thead>
               <tr>
-                <th style={thTd}>Company</th>
-                <th style={thTd}>Contact</th>
-                <th style={thTd}>Email</th>
-                <th style={thTd}>Phone</th>
-                <th style={thTd}>Role</th>
-                <th style={thTd}>Active</th>
-                <th style={thTd}>Can Edit Unack</th>
-                <th style={thTd}>Login Linked</th>
-                <th style={thTd}>Created</th>
-                <th style={thTd}>Actions</th>
+                <th style={thStyle}>Company</th>
+                <th style={thStyle}>Contact</th>
+                <th style={thStyle}>Email</th>
+                <th style={thStyle}>Phone</th>
+                <th style={thStyle}>Role</th>
+                <th style={thStyle}>Active</th>
+                <th style={thStyle}>Can Edit Unack</th>
+                <th style={thStyle}>Login Linked</th>
+                <th style={thStyle}>Created</th>
+                <th style={thStyle}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={10} style={thTd}>
+                  <td colSpan={10} style={tdStyle}>
                     Loading accounts...
                   </td>
                 </tr>
@@ -1345,27 +1442,30 @@ const { data, error: fnErr } = await supabase.functions.invoke(
 
               {!loading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={10} style={thTd}>
+                  <td colSpan={10} style={tdStyle}>
                     No customer accounts found.
                   </td>
                 </tr>
               )}
 
               {!loading &&
-                filtered.map((acct) => (
-                  <tr key={acct.id}>
-                    <td style={thTd}>{acct.company_name}</td>
-                    <td style={thTd}>{acct.contact_name}</td>
-                    <td style={thTd}>{acct.email}</td>
-                    <td style={thTd}>{acct.phone}</td>
-                    <td style={thTd}>{acct.role}</td>
-                    <td style={thTd}>{statusBadge(acct.active)}</td>
-                    <td style={thTd}>
+                filtered.map((acct, index) => (
+                  <tr
+                    key={acct.id}
+                    style={{ background: index % 2 === 0 ? theme.tableBg : theme.rowAlt }}
+                  >
+                    <td style={tdStyle}>{acct.company_name}</td>
+                    <td style={tdStyle}>{acct.contact_name}</td>
+                    <td style={tdStyle}>{acct.email}</td>
+                    <td style={tdStyle}>{acct.phone}</td>
+                    <td style={tdStyle}>{acct.role}</td>
+                    <td style={tdStyle}>{statusBadge(acct.active)}</td>
+                    <td style={tdStyle}>
                       {acct.can_edit_unacknowledged ? "Yes" : "No"}
                     </td>
-                    <td style={thTd}>{acct.auth_user_id ? "Yes" : "No"}</td>
-                    <td style={thTd}>{formatDt(acct.created_at)}</td>
-                    <td style={thTd}>
+                    <td style={tdStyle}>{acct.auth_user_id ? "Yes" : "No"}</td>
+                    <td style={tdStyle}>{formatDt(acct.created_at)}</td>
+                    <td style={tdStyle}>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <button
                           type="button"
@@ -1394,18 +1494,225 @@ const { data, error: fnErr } = await supabase.functions.invoke(
   );
 }
 
+function CustomerMasterTab() {
+  const [rows, setRows] = useState([]);
+  const [search, setSearch] = useState("");
+  const [customerId, setCustomerId] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    loadCustomerMaster();
+  }, []);
+
+  function normalizeCustomerName(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/\b(ltd|limited|inc|corp|corporation|co|company)\b/g, "")
+      .replace(/[^a-z0-9]/g, "");
+  }
+
+  async function loadCustomerMaster() {
+    setLoading(true);
+    setErr("");
+    setMsg("");
+
+    try {
+      const { data, error } = await supabase
+        .from("customers_master")
+        .select("*")
+        .order("customer_name", { ascending: true });
+
+      if (error) throw error;
+      setRows(data || []);
+    } catch (e) {
+      console.error(e);
+      setErr(e.message || "Failed to load customer master.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function saveCustomerMaster(e) {
+    e.preventDefault();
+    setErr("");
+    setMsg("");
+
+    if (!customerId.trim() || !customerName.trim()) {
+      setErr("Customer ID and Customer Name are required.");
+      return;
+    }
+
+    try {
+      const payload = {
+        customer_id: customerId.trim().toUpperCase(),
+        customer_name: customerName.trim().toUpperCase(),
+        normalized_name: normalizeCustomerName(customerName),
+      };
+
+      const { error } = await supabase
+        .from("customers_master")
+        .upsert([payload], { onConflict: "customer_id" });
+
+      if (error) throw error;
+
+      setMsg("Customer master saved.");
+      setCustomerId("");
+      setCustomerName("");
+      await loadCustomerMaster();
+    } catch (e) {
+      console.error(e);
+      setErr(e.message || "Failed to save customer master.");
+    }
+  }
+
+  function editRow(row) {
+    setCustomerId(row.customer_id || "");
+    setCustomerName(row.customer_name || "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+
+    return rows.filter(
+      (row) =>
+        String(row.customer_id || "").toLowerCase().includes(q) ||
+        String(row.customer_name || "").toLowerCase().includes(q)
+    );
+  }, [rows, search]);
+
+  return (
+    <div>
+      <div style={cardStyle}>
+        <SectionTitle
+          title="Customer Master"
+          subtitle="Add customer IDs and names for yard ticket accounting exports."
+          right={
+            <button type="button" onClick={loadCustomerMaster} style={secondaryButtonStyle}>
+              Refresh
+            </button>
+          }
+        />
+
+        <form
+          onSubmit={saveCustomerMaster}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 10,
+            marginTop: 12,
+          }}
+        >
+          <Field label="Customer ID">
+            <input
+              value={customerId}
+              onChange={(e) => setCustomerId(e.target.value.toUpperCase())}
+              placeholder="C000464"
+              style={inputStyle}
+            />
+          </Field>
+
+          <Field label="Customer Name">
+            <input
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              placeholder="ALL ROADS CONSTRUCTION"
+              style={inputStyle}
+            />
+          </Field>
+
+          <div style={{ alignSelf: "end" }}>
+            <button type="submit" style={buttonStyle}>
+              Save Customer ID
+            </button>
+          </div>
+        </form>
+
+        <MessageBlock message={msg} error={err} />
+      </div>
+
+      <div style={cardStyle}>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search customer ID or name..."
+          style={{ ...inputStyle, maxWidth: 420, marginBottom: 14 }}
+        />
+
+        <div style={tableOuter}>
+          <table style={tableStyle}>
+            <thead>
+              <tr>
+                <th style={thStyle}>Customer ID</th>
+                <th style={thStyle}>Customer Name</th>
+                <th style={thStyle}>Normalized Name</th>
+                <th style={thStyle}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading && (
+                <tr>
+                  <td colSpan={4} style={tdStyle}>Loading...</td>
+                </tr>
+              )}
+
+              {!loading && filtered.length === 0 && (
+                <tr>
+                  <td colSpan={4} style={tdStyle}>No customers found.</td>
+                </tr>
+              )}
+
+              {!loading &&
+                filtered.map((row, index) => (
+                  <tr key={row.customer_id} style={{ background: index % 2 === 0 ? theme.tableBg : theme.rowAlt }}>
+                    <td style={{ ...tdStyle, color: theme.text, fontWeight: 800 }}>
+                      {row.customer_id}
+                    </td>
+                    <td style={tdStyle}>{row.customer_name}</td>
+                    <td style={tdStyle}>{row.normalized_name}</td>
+                    <td style={tdStyle}>
+                      <button type="button" onClick={() => editRow(row)} style={secondaryButtonStyle}>
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("customers");
 
   const tabs = [
-    { id: "customers", label: "Customers" },
-    { id: "jobs", label: "Jobs" },
-    { id: "mixes", label: "Mixes" },
-    { id: "accounts", label: "Customer Accounts" },
-  ];
+  { id: "customers", label: "Customers" },
+  { id: "customerMaster", label: "Customer Master" },
+  { id: "jobs", label: "Jobs" },
+  { id: "mixes", label: "Mixes" },
+  { id: "accounts", label: "Customer Accounts" },
+  { id: "vendors", label: "Vendors" },
+  { id: "accounting", label: "Accounting Exports" },
+];
 
   return (
-    <div style={{ padding: 20, maxWidth: 1400, margin: "0 auto" }}>
+    <div
+      style={{
+        padding: 20,
+        maxWidth: 1400,
+        margin: "0 auto",
+        background: theme.pageBg,
+        minHeight: "100vh",
+      }}
+    >
       <div
         style={{
           marginBottom: 14,
@@ -1415,42 +1722,42 @@ export default function AdminDashboard() {
           alignItems: "center",
         }}
       >
-        <h1 style={{ margin: 0 }}>Admin Dashboard</h1>
+        <h1 style={{ margin: 0, color: theme.text, fontSize: 32 }}>Administrator Panel</h1>
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              ...secondaryButtonStyle,
-              border:
-                activeTab === tab.id
-                  ? "1px solid #0099ff"
+        {tabs.map((tab) => {
+          const active = activeTab === tab.id;
+
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                ...secondaryButtonStyle,
+                border: active
+                  ? `1px solid ${theme.activeTabBorder}`
                   : secondaryButtonStyle.border,
-              background:
-                activeTab === tab.id
-                  ? "#e8f4ff"
-                  : secondaryButtonStyle.background,
-              color:
-                activeTab === tab.id
-                  ? "#0b4e8a"
-                  : secondaryButtonStyle.color,
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+                background: active ? theme.activeTabBg : secondaryButtonStyle.background,
+                color: active ? theme.activeTabText : secondaryButtonStyle.color,
+              }}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {activeTab === "customers" && <CustomersTab />}
-      {activeTab === "jobs" && <JobsTab />}
-      {activeTab === "mixes" && <MixesTab />}
-      {activeTab === "accounts" && <AccountsTab />}
+{activeTab === "jobs" && <JobsTab />}
+{activeTab === "mixes" && <MixesTab />}
+{activeTab === "accounts" && <AccountsTab />}
+{activeTab === "vendors" && <VendorManager />}
+{activeTab === "customerMaster" && <CustomerMasterTab />}
+{activeTab === "accounting" && <AccountingExports />}
 
-      <div style={{ marginTop: 20, color: "#777", fontSize: 12 }}>
+      <div style={{ marginTop: 20, color: theme.textMuted, fontSize: 12 }}>
         <p>Tip: refresh sections after external updates to keep data in sync.</p>
       </div>
     </div>

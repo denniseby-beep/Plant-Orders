@@ -9,9 +9,6 @@ const STATUS = {
   CANCELLED: "Cancelled",
 };
 
-const LOAD_13 = 13.5;
-const LOAD_38 = 38.5;
-
 function normalizeStatus(value) {
   const v = String(value || "").trim().toLowerCase();
   if (v === "unack" || v === "unacknowledged") return STATUS.UNACK;
@@ -73,14 +70,38 @@ function partsTo24(hour, min, ampm) {
 }
 
 function loadedTonnes(order) {
-  const loaded13 = Number(order.loaded_13 || 0);
-  const loaded38 = Number(order.loaded_38 || 0);
-  const remainder = Number(order.loaded_remainder_tonne || 0);
-  return loaded13 * LOAD_13 + loaded38 * LOAD_38 + remainder;
+  const directLoaded = Number(
+    order.actual_loaded_tonnes ??
+      order.loaded_tonnes ??
+      order.total_loaded_tonnes ??
+      0
+  );
+
+  if (directLoaded > 0) return directLoaded;
+
+  const ordered = Number(order.ordered_tonnes ?? order.quantity_tonne ?? 0);
+  const remaining = Number(order.remaining_tonnes ?? 0);
+
+  if (ordered > 0 && remaining < ordered) {
+    return Math.max(0, ordered - remaining);
+  }
+
+  return 0;
 }
 
 function remainingTonnes(order) {
-  const qty = Number(order.quantity_tonne || 0);
+  const qty = Number(
+    order.ordered_tonnes ??
+      order.quantity_tonne ??
+      0
+  );
+
+  const remainingFromView = order.remaining_tonnes;
+
+  if (remainingFromView !== null && remainingFromView !== undefined) {
+    return Math.max(0, Number(remainingFromView || 0));
+  }
+
   return Math.max(0, qty - loadedTonnes(order));
 }
 
@@ -283,7 +304,7 @@ function OrderActionsModal({
           <div style={styles.modalMix}>{order.mix_type || "-"}</div>
 
           <div style={styles.modalInfo}>
-            Qty: {Number(order.quantity_tonne || 0).toFixed(2)} T
+            Qty: {Number(order.ordered_tonnes ?? order.quantity_tonne ?? 0).toFixed(2)} T
           </div>
           <div style={styles.modalInfo}>
             Load: {formatPrettyTime(order.load_time)} ({order.load_time || "-"})
@@ -553,11 +574,10 @@ export default function InternalApp({ access, readOnly }) {
       setError("");
 
       const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("order_date", selectedDate)
-        .order("load_time", { ascending: true })
-        .order("created_at", { ascending: true });
+  .from("scale_order_summary")
+  .select("*")
+  .eq("order_date", selectedDate)
+  .order("load_time", { ascending: true });
 
       if (error) throw error;
 
@@ -574,6 +594,14 @@ export default function InternalApp({ access, readOnly }) {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+  const interval = setInterval(() => {
+    loadOrders();
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, [selectedDate]);
 
   useEffect(() => {
     loadOrders();
@@ -605,54 +633,83 @@ export default function InternalApp({ access, readOnly }) {
   }, [orders, search]);
 
   const board = useMemo(() => {
-    const unack = [];
-    const ack = [];
-    const loaded = [];
-    const complete = [];
+  const unack = [];
+  const ack = [];
+  const loaded = [];
+  const complete = [];
 
-    for (const order of filteredOrders) {
-      const status = normalizeStatus(order.status);
+  for (const order of filteredOrders) {
+    let status = normalizeStatus(order.status);
 
-      if (status === STATUS.CANCELLED) {
-        if (showCancelledInUnack) unack.push(order);
-        continue;
+    const scaledLoaded = loadedTonnes(order);
+    const remaining = remainingTonnes(order);
+
+    if (status !== STATUS.CANCELLED) {
+      if (scaledLoaded > 0 && remaining <= 0) {
+        status = STATUS.COMPLETE;
+      } else if (scaledLoaded > 0) {
+        status = STATUS.LOADED;
       }
-
-      if (status === STATUS.UNACK) unack.push(order);
-      else if (status === STATUS.ACK) ack.push(order);
-      else if (status === STATUS.LOADED) loaded.push(order);
-      else if (status === STATUS.COMPLETE) complete.push(order);
     }
 
-    return { unack, ack, loaded, complete };
-  }, [filteredOrders, showCancelledInUnack]);
+    if (
+  status === STATUS.CANCELLED ||
+  status === "Cancelled"
+) {
+  if (showCancelledInUnack) {
+    unack.push(order);
+  }
+
+  continue;
+}
+
+    if (status === STATUS.UNACK) unack.push(order);
+    else if (status === STATUS.ACK) ack.push(order);
+    else if (status === STATUS.LOADED) loaded.push(order);
+    else if (status === STATUS.COMPLETE) complete.push(order);
+  }
+
+  return { unack, ack, loaded, complete };
+}, [filteredOrders, showCancelledInUnack]);
 
   const totals = useMemo(() => {
-    const activeOrders = filteredOrders.filter(
-      (o) =>
-        normalizeStatus(o.status) !== STATUS.CANCELLED &&
-        (showCompleted || normalizeStatus(o.status) !== STATUS.COMPLETE)
-    );
+  const activeOrders = filteredOrders.filter(
+    (o) => o.status !== "Completed"
+  );
 
-    const totalTonnes = activeOrders.reduce(
-      (sum, o) => sum + Number(o.quantity_tonne || 0),
-      0
-    );
+  const shipped = activeOrders.reduce(
+    (sum, o) => sum + loadedTonnes(o),
+    0
+  );
 
-    const shipped = activeOrders.reduce((sum, o) => sum + loadedTonnes(o), 0);
+  const totalRemaining = activeOrders.reduce(
+    (sum, o) => sum + remainingTonnes(o),
+    0
+  );
 
-    return {
-      totalTonnes,
-      shipped,
-      orderCount: activeOrders.length,
-    };
-  }, [filteredOrders, showCompleted]);
+  return {
+    shipped,
+    totalRemaining,
+    orderCount: activeOrders.length,
+  };
+}, [filteredOrders]);
 
   const remainingByMix = useMemo(() => {
     const map = new Map();
 
     for (const order of filteredOrders) {
-      const status = normalizeStatus(order.status);
+      let status = normalizeStatus(order.status);
+
+const loaded = loadedTonnes(order);
+const remaining = remainingTonnes(order);
+
+if (status !== STATUS.CANCELLED) {
+  if (loaded > 0 && remaining <= 0) {
+    status = STATUS.COMPLETE;
+  } else if (loaded > 0) {
+    status = STATUS.LOADED;
+  }
+}
       if (status === STATUS.CANCELLED || status === STATUS.COMPLETE) continue;
 
       const mix = order.mix_type || "Unknown";
@@ -985,38 +1042,59 @@ export default function InternalApp({ access, readOnly }) {
   };
 
   const openEditModal = (order) => {
-    if (!order) return;
+  if (!order) return;
 
-    const loadParts = parse24ToParts(order.load_time);
-    const weatherParts = parse24ToParts(order.weather_call_time);
+  const loadParts = parse24ToParts(order.load_time);
+  const weatherParts = parse24ToParts(order.weather_call_time);
 
-    setEditingOrder(order);
-    setEditDraft({
-      customer: order.customer || "",
-      mix_type: order.mix_type || "",
-      quantity_tonne: order.quantity_tonne ?? "",
-      order_date: order.order_date || selectedDate,
-      load_hour: loadParts.hour,
-      load_min: loadParts.min,
-      load_ampm: loadParts.ampm,
-      job_number: order.job_number || "",
-      po_number: order.po_number || "",
-      foreman: order.foreman || "",
-      address: order.address || "",
-      site_contact_name: order.site_contact_name || "",
-      site_contact_phone: order.site_contact_phone || "",
-      notes: order.notes || "",
-      weather_call: !!order.weather_call,
-      weather_hour: weatherParts.hour,
-      weather_min: weatherParts.min,
-      weather_ampm: weatherParts.ampm,
-      trucks_working: order.trucks_working ?? "",
-      truck_schedule_mode: order.truck_schedule_mode || "stagger",
-      stagger_minutes: order.stagger_minutes ?? "",
-    });
-    setEditOpen(true);
-    setModalActiveField(null);
-  };
+  const resolvedOrderDate =
+    order.order_date ||
+    order.production_date ||
+    order.ticket_date ||
+    order.load_date ||
+    selectedDate;
+
+  console.log("EDIT ORDER DATE FIELDS:", {
+    id: order.id,
+    order_id: order.order_id,
+    order_date: order.order_date,
+    production_date: order.production_date,
+    ticket_date: order.ticket_date,
+    load_date: order.load_date,
+    selectedDate,
+    resolvedOrderDate,
+    fullOrder: order,
+  });
+
+  setEditingOrder(order);
+
+  setEditDraft({
+    customer: order.customer || "",
+    mix_type: order.mix_type || "",
+    quantity_tonne: order.quantity_tonne ?? order.ordered_tonnes ?? "",
+    order_date: selectedDate,
+    load_hour: loadParts.hour,
+    load_min: loadParts.min,
+    load_ampm: loadParts.ampm,
+    job_number: order.job_number || "",
+    po_number: order.po_number || "",
+    foreman: order.foreman || "",
+    address: order.address || "",
+    site_contact_name: order.site_contact_name || "",
+    site_contact_phone: order.site_contact_phone || "",
+    notes: order.notes || "",
+    weather_call: !!order.weather_call,
+    weather_hour: weatherParts.hour,
+    weather_min: weatherParts.min,
+    weather_ampm: weatherParts.ampm,
+    trucks_working: order.trucks_working ?? "",
+    truck_schedule_mode: order.truck_schedule_mode || "stagger",
+    stagger_minutes: order.stagger_minutes ?? "",
+  });
+
+  setEditOpen(true);
+  setModalActiveField(null);
+};
 
   const closeEditModal = () => {
     setEditOpen(false);
@@ -1177,11 +1255,17 @@ export default function InternalApp({ access, readOnly }) {
   };
 
   const submitEditOrder = async (e) => {
-    e.preventDefault();
-    if (!editingOrder?.id) return;
+  e.preventDefault();
 
-    try {
-      setSavingEdit(true);
+  const orderId = editingOrder?.id || editingOrder?.order_id;
+
+  if (!orderId) {
+    alert("Missing order ID. Cannot save changes.");
+    return;
+  }
+
+  try {
+    setSavingEdit(true);
 
       const payload = {
         customer: editDraft.customer || "",
@@ -1211,7 +1295,7 @@ export default function InternalApp({ access, readOnly }) {
       const { error } = await supabase
         .from("orders")
         .update(payload)
-        .eq("id", editingOrder.id);
+        .eq("id", orderId);
 
       if (error) throw error;
 
@@ -1337,84 +1421,6 @@ export default function InternalApp({ access, readOnly }) {
     openEditModal(order);
   };
 
-  const applyStandardLoad = async (order, amount) => {
-    try {
-      const status = normalizeStatus(order.status);
-      const remaining = remainingTonnes(order);
-
-      let patch = {
-        status:
-          status === STATUS.UNACK
-            ? STATUS.LOADED
-            : status === STATUS.ACK
-              ? STATUS.LOADED
-              : status,
-        updated_at: new Date().toISOString(),
-      };
-
-      if (Number(amount) === LOAD_13) {
-        patch.loaded_13 = Number(order.loaded_13 || 0) + 1;
-      } else if (Number(amount) === LOAD_38) {
-        patch.loaded_38 = Number(order.loaded_38 || 0) + 1;
-      }
-
-      const newRemaining = Math.max(0, remaining - amount);
-      if (newRemaining <= 0) {
-        patch.status = STATUS.COMPLETE;
-        patch.completed_at = new Date().toISOString();
-      }
-
-      const { error } = await supabase.from("orders").update(patch).eq("id", order.id);
-      if (error) throw error;
-
-      await loadOrders();
-    } catch (err) {
-      console.error(err);
-      alert(err.message || "Failed to apply load");
-    }
-  };
-
-  const applyCustomLoad = async (order) => {
-    const input = window.prompt("Enter custom loaded tonnes:", "");
-    if (input == null) return;
-
-    const amount = Number(input);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      alert("Enter a valid positive number.");
-      return;
-    }
-
-    try {
-      const status = normalizeStatus(order.status);
-      const remaining = remainingTonnes(order);
-      const currentRemainder = Number(order.loaded_remainder_tonne || 0);
-
-      let patch = {
-        loaded_remainder_tonne: currentRemainder + amount,
-        status:
-          status === STATUS.UNACK
-            ? STATUS.LOADED
-            : status === STATUS.ACK
-              ? STATUS.LOADED
-              : status,
-        updated_at: new Date().toISOString(),
-      };
-
-      const newRemaining = Math.max(0, remaining - amount);
-      if (newRemaining <= 0) {
-        patch.status = STATUS.COMPLETE;
-        patch.completed_at = new Date().toISOString();
-      }
-
-      const { error } = await supabase.from("orders").update(patch).eq("id", order.id);
-      if (error) throw error;
-
-      await loadOrders();
-    } catch (err) {
-      console.error(err);
-      alert(err.message || "Failed to apply custom load");
-    }
-  };
 
   function renderCard(order) {
   const isComplete = order.status === STATUS.COMPLETE;
@@ -1438,12 +1444,10 @@ export default function InternalApp({ access, readOnly }) {
         : STATUS.COMPLETE;
 
   const mixColor = mixColorMap?.get?.(order.mix_type) || "#d1d5db";
-  const tandemCount = Number(order.loaded_13 || 0);
-  const transferCount = Number(order.loaded_38 || 0);
-
+  
   return (
     <div
-      key={order.id}
+      key={order.id || order.order_id}
       style={{
         ...styles.orderCard,
         ...(night ? styles.nightCard : {}),
@@ -1568,7 +1572,9 @@ export default function InternalApp({ access, readOnly }) {
           <span style={{ fontWeight: 800, color: darkMode ? "#94a3b8" : "#64748b" }}>
             Qty
           </span>
-          <span>{Number(order.quantity_tonne || 0).toFixed(2)} T</span>
+          <span>
+  {Number(order.ordered_tonnes ?? order.quantity_tonne ?? 0).toFixed(2)} T
+</span>
         </div>
 
         <div
@@ -1684,78 +1690,6 @@ export default function InternalApp({ access, readOnly }) {
   </div>
 ) : null}
         
-      </div>
-
-      <div style={{ marginTop: 10 }}>
-        {!readOnly && !isCancelled && (
-          <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-            <button
-              style={{
-                ...styles.btn,
-                flex: 1,
-                padding: "8px 6px",
-                fontSize: 12,
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                applyStandardLoad(order, LOAD_13);
-              }}
-              type="button"
-            >
-              {`2X • ${tandemCount}`}
-            </button>
-
-            <button
-              style={{
-                ...styles.btn,
-                flex: 1,
-                padding: "8px 6px",
-                fontSize: 12,
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                applyStandardLoad(order, LOAD_38);
-              }}
-              type="button"
-            >
-              {`T4 • ${transferCount}`}
-            </button>
-
-            <button
-              style={{
-                ...styles.btn,
-                flex: 1,
-                padding: "8px 6px",
-                fontSize: 12,
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                applyCustomLoad(order);
-              }}
-              type="button"
-            >
-              Custom
-            </button>
-          </div>
-        )}
-
-        {!readOnly && !isComplete && !isCancelled && (
-          <button
-            style={{
-              ...styles.btnPrimary,
-              width: "100%",
-              marginTop: 0,
-              padding: "10px 12px",
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              moveStatus(order, nextStatusValue);
-            }}
-            type="button"
-          >
-            {nextStatusLabel}
-          </button>
-        )}
       </div>
     </div>
   );
@@ -2170,8 +2104,8 @@ export default function InternalApp({ access, readOnly }) {
             </div>
 
             <div style={{ ...styles.small, marginTop: 6 }}>
-              Shipped so far: <b>{totals.shipped.toFixed(2)}</b> T • Total ordered:{" "}
-              <b>{totals.totalTonnes.toFixed(2)}</b> T • Active orders:{" "}
+              Shipped: <b>{totals.shipped.toFixed(2)}</b> T • Remaining:{" "}
+              <b>{totals.totalRemaining.toFixed(2)}</b> T • Active orders:{" "}
               <b>{totals.orderCount}</b>
             </div>
 

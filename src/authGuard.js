@@ -5,7 +5,9 @@ const EMPTY_ALLOWED = {
   customerPortal: false,
   managerDashboard: false,
   jobTickets: false,
+  yardTickets: false,
   admin: false,
+  jobReports: false,
 };
 
 const EMPTY_ACCESS = {
@@ -22,7 +24,9 @@ const EMPTY_ACCESS = {
   isManager: false,
   isOperator: false,
   isCustomer: false,
+  isProjectManager: false,
   isInternalReadOnly: false,
+  isYard: false,
 };
 
 function normalizeRole(value) {
@@ -44,13 +48,17 @@ function buildAccess(role) {
           customerPortal: true,
           managerDashboard: true,
           jobTickets: true,
+          yardTickets: true,
           admin: true,
+          jobReports: true,
         },
         isAdmin: true,
         isManager: false,
         isOperator: false,
         isCustomer: false,
+        isProjectManager: false,
         isInternalReadOnly: false,
+        isYard: false,
       };
 
     case "manager":
@@ -60,13 +68,37 @@ function buildAccess(role) {
           customerPortal: false,
           managerDashboard: true,
           jobTickets: true,
+          yardTickets: true,
           admin: false,
+          jobReports: true,
         },
         isAdmin: false,
         isManager: true,
         isOperator: false,
         isCustomer: false,
+        isProjectManager: false,
         isInternalReadOnly: true,
+        isYard: false,
+      };
+
+    case "project_manager":
+      return {
+        allowed: {
+          plantDashboard: false,
+          customerPortal: false,
+          managerDashboard: true,
+          jobTickets: true,
+          yardTickets: true,
+          admin: false,
+          jobReports: true,
+        },
+        isAdmin: false,
+        isManager: false,
+        isOperator: false,
+        isCustomer: false,
+        isProjectManager: true,
+        isInternalReadOnly: true,
+        isYard: false,
       };
 
     case "operator":
@@ -76,13 +108,37 @@ function buildAccess(role) {
           customerPortal: false,
           managerDashboard: false,
           jobTickets: true,
+          yardTickets: true,
           admin: false,
+          jobReports: false,
         },
         isAdmin: false,
         isManager: false,
         isOperator: true,
         isCustomer: false,
+        isProjectManager: false,
         isInternalReadOnly: false,
+        isYard: false,
+      };
+
+    case "yard":
+      return {
+        allowed: {
+          plantDashboard: false,
+          customerPortal: false,
+          managerDashboard: false,
+          jobTickets: false,
+          yardTickets: true,
+          admin: false,
+          jobReports: false,
+        },
+        isAdmin: false,
+        isManager: false,
+        isOperator: false,
+        isCustomer: false,
+        isProjectManager: false,
+        isInternalReadOnly: false,
+        isYard: true,
       };
 
     case "customer":
@@ -92,16 +148,19 @@ function buildAccess(role) {
           customerPortal: true,
           managerDashboard: false,
           jobTickets: true,
+          yardTickets: false,
           admin: false,
+          jobReports: false,
         },
         isAdmin: false,
         isManager: false,
         isOperator: false,
         isCustomer: true,
+        isProjectManager: false,
         isInternalReadOnly: false,
+        isYard: false,
       };
 
-    // backward compatibility
     case "internal":
       return {
         allowed: {
@@ -109,13 +168,17 @@ function buildAccess(role) {
           customerPortal: false,
           managerDashboard: false,
           jobTickets: true,
+          yardTickets: true,
           admin: false,
+          jobReports: false,
         },
         isAdmin: false,
         isManager: false,
         isOperator: false,
         isCustomer: false,
+        isProjectManager: false,
         isInternalReadOnly: false,
+        isYard: false,
       };
 
     case "internal_readonly":
@@ -125,13 +188,17 @@ function buildAccess(role) {
           customerPortal: false,
           managerDashboard: false,
           jobTickets: true,
+          yardTickets: true,
           admin: false,
+          jobReports: false,
         },
         isAdmin: false,
         isManager: false,
         isOperator: false,
         isCustomer: false,
+        isProjectManager: false,
         isInternalReadOnly: true,
+        isYard: false,
       };
 
     default:
@@ -141,7 +208,9 @@ function buildAccess(role) {
         isManager: false,
         isOperator: false,
         isCustomer: false,
+        isProjectManager: false,
         isInternalReadOnly: false,
+        isYard: false,
       };
   }
 }
@@ -230,11 +299,6 @@ export async function getAccessContext() {
     let role = null;
     let customerAccount = null;
 
-    // Priority:
-    // 1) user_roles
-    // 2) internal_users
-    // 3) customer_users
-    // 4) profile fallback
     if (userRoleRow?.role) {
       role = normalizeRole(userRoleRow.role);
     } else if (internalUser?.is_active !== false && internalUser?.role) {
@@ -251,7 +315,6 @@ export async function getAccessContext() {
         customerUser.customer_id ??
         null;
 
-      // 1) direct ID lookup
       if (customerId) {
         customerAccount = await safeMaybeSingle(
           supabase
@@ -263,7 +326,6 @@ export async function getAccessContext() {
         );
       }
 
-      // 2) fallback by company_name on customer_users
       if (!customerAccount && customerUser.company_name) {
         customerAccount = await safeMaybeSingle(
           supabase
@@ -275,7 +337,6 @@ export async function getAccessContext() {
         );
       }
 
-      // 3) fallback by email on customer_accounts if that exists in your table
       if (!customerAccount && user.email) {
         customerAccount = await safeMaybeSingle(
           supabase
@@ -288,7 +349,6 @@ export async function getAccessContext() {
       }
     }
 
-    // 4) fallback by company_name from profile
     if (!customerAccount && role === "customer" && profile?.company_name) {
       customerAccount = await safeMaybeSingle(
         supabase
@@ -300,7 +360,6 @@ export async function getAccessContext() {
       );
     }
 
-    // 5) final fallback: use customerAccount-linked company name from profile/customerUser
     const resolvedCompanyName =
       normalizeText(customerAccount?.company_name) ||
       normalizeText(profile?.company_name) ||
@@ -331,7 +390,9 @@ export async function getAccessContext() {
       isManager: access.isManager,
       isOperator: access.isOperator,
       isCustomer: access.isCustomer,
+      isProjectManager: access.isProjectManager,
       isInternalReadOnly: access.isInternalReadOnly,
+      isYard: access.isYard,
     };
 
     console.log("getAccessContext result", result);

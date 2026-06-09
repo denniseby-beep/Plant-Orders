@@ -290,11 +290,13 @@ function setPresetNightShift() {
       padding: 16,
       marginBottom: 16,
     },
-    filterGrid: {
+    filtersGrid: {
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-      gap: 12,
+      gridTemplateColumns:
+      "160px 160px 170px 170px 300px 180px 240px 160px 250px",
+      gap: 10,
       alignItems: "end",
+      overflowX: "auto",
     },
     label: {
       display: "block",

@@ -86,6 +86,48 @@ export default function CustomerAccountManager() {
     setCompanySuggestions(uniqueNames);
   }
 
+  function isInternalRole(selectedRole) {
+  return [
+    "admin",
+    "manager",
+    "project_manager",
+    "operator",
+    "yard",
+  ].includes(String(selectedRole || "").trim().toLowerCase());
+}
+
+function getSuccessMessage(selectedRole) {
+  const cleanRole = String(selectedRole || "")
+    .trim()
+    .toLowerCase();
+
+  switch (cleanRole) {
+    case "customer":
+      return "Customer account created successfully.";
+
+    case "dispatcher":
+      return "Dispatcher account created successfully.";
+
+    case "yard":
+      return "Yard user account created successfully.";
+
+    case "project_manager":
+      return "Project manager account created successfully.";
+
+    case "operator":
+      return "Operator account created successfully.";
+
+    case "manager":
+      return "Manager account created successfully.";
+
+    case "admin":
+      return "Administrator account created successfully.";
+
+    default:
+      return "Account created successfully.";
+  }
+}
+
   async function handleCreate(e) {
     e.preventDefault();
     setSaving(true);
@@ -98,6 +140,7 @@ export default function CustomerAccountManager() {
       const cleanEmail = email.trim().toLowerCase();
       const cleanPhone = phone.trim();
       const cleanPassword = password.trim();
+      const cleanRole = String(role || "").trim().toLowerCase();
 
       if (!cleanCompanyName) {
         throw new Error("Company name is required.");
@@ -115,6 +158,10 @@ export default function CustomerAccountManager() {
         throw new Error("Password is required.");
       }
 
+      if (!cleanRole) {
+        throw new Error("Role is required.");
+      }
+
       const {
         data: { session },
         error: sessionError,
@@ -129,43 +176,58 @@ export default function CustomerAccountManager() {
       }
 
       let functionName = "create-customer-account";
-      const body = {
-        company_name: cleanCompanyName,
-        contact_name: cleanContactName,
-        email: cleanEmail,
-        password: cleanPassword,
-        phone: cleanPhone,
-        role,
-        can_edit_unacknowledged: canEditUnacknowledged,
-      };
 
-      if (["admin", "manager", "operator"].includes(role)) {
+      const body = {
+  company_name: cleanCompanyName,
+  contact_name: cleanContactName,
+  full_name: cleanContactName,
+  email: cleanEmail,
+  password: cleanPassword,
+  phone: cleanPhone,
+  role: cleanRole,
+  can_edit_unacknowledged: canEditUnacknowledged,
+};
+
+      if (isInternalRole(cleanRole)) {
         functionName = "create-internal-user";
       }
 
-      const { error: functionError } = await supabase.functions.invoke(
-        functionName,
-        {
-          body,
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        }
-      );
+      const { data: functionData, error: functionError } =
+  await supabase.functions.invoke(functionName, {
+    body,
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
 
-      if (functionError) {
-        throw new Error(
-          functionError.context?.error ||
-            functionError.message ||
-            `Failed to create account (${functionName})`
-        );
-      }
+console.log("createAccount functionData:", functionData);
+console.log("createAccount functionError:", functionError);
 
-      setMessage(
-        role === "customer" || role === "dispatcher"
-          ? "Customer account created successfully."
-          : "Internal user account created successfully."
-      );
+if (functionError) {
+  let detailedMessage = "";
+
+  if (functionData && typeof functionData === "object" && functionData.error) {
+    detailedMessage = functionData.error;
+  } else if (functionError.context && typeof functionError.context === "object") {
+    detailedMessage =
+      functionError.context.error ||
+      functionError.context.message ||
+      "";
+  } else if (typeof functionError.message === "string") {
+    detailedMessage = functionError.message;
+  }
+
+  if (
+    !detailedMessage ||
+    detailedMessage === "Edge Function returned a non-2xx status code"
+  ) {
+    detailedMessage = `Failed to create account (${functionName}). Check Supabase Edge Function logs for the exact backend error.`;
+  }
+
+  throw new Error(detailedMessage);
+}
+
+      setMessage(getSuccessMessage(cleanRole));
 
       setCompanyName("");
       setContactName("");
@@ -331,7 +393,7 @@ export default function CustomerAccountManager() {
         <div>
           <h1 style={{ margin: 0 }}>Customer Account Manager</h1>
           <p style={{ margin: "6px 0 0", color: "#666" }}>
-            Create and manage customer login access for the ordering portal.
+            Create and manage customer and internal login access for the system.
           </p>
         </div>
 
@@ -341,7 +403,7 @@ export default function CustomerAccountManager() {
       </div>
 
       <div style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>Create Customer Account</h2>
+        <h2 style={{ marginTop: 0 }}>Create Account</h2>
 
         <form
           onSubmit={handleCreate}
@@ -423,9 +485,11 @@ export default function CustomerAccountManager() {
             >
               <option value="customer">customer</option>
               <option value="dispatcher">dispatcher</option>
+              <option value="yard">yard</option>
               <option value="operator">operator</option>
               <option value="manager">manager</option>
               <option value="admin">admin</option>
+              <option value="project_manager">Project Manager</option>
             </select>
           </div>
 

@@ -10,12 +10,18 @@ import ResetPassword from "./ResetPassword";
 import ManagerDashboard from "./ManagerDashboard";
 import JobUpdates from "./JobUpdates";
 import JobTickets from "./JobTickets";
+import DispatchApp from "./DispatchApp";
+import YardTickets from "./YardTickets";
+import JobReports from "./JobReports";
+import ScaleDashboard from "./ScaleDashboard";
+import AccountingExports from "./AccountingExports";
 
 const EMPTY_ALLOWED = {
   plantDashboard: false,
   customerPortal: false,
   managerDashboard: false,
   jobTickets: false,
+  yardTickets: false,
   admin: false,
 };
 
@@ -34,6 +40,7 @@ const EMPTY_ACCESS = {
   isOperator: false,
   isCustomer: false,
   isInternalReadOnly: false,
+  isYard: false,
 };
 
 function normalizePath(pathname) {
@@ -42,20 +49,14 @@ function normalizePath(pathname) {
   return raw.endsWith("/") && raw !== "/" ? raw.slice(0, -1) : raw;
 }
 
-function getDefaultRoute(access) {
-  if (access?.allowed?.admin) return "/admin";
-  if (access?.allowed?.managerDashboard) return "/manager";
-  if (access?.allowed?.customerPortal) return "/customer";
-  if (access?.allowed?.plantDashboard) return "/internal";
-  return "/";
-}
-
 function redirectToPath(path) {
   const nextPath = path || "/";
+
   if (normalizePath(window.location.pathname) !== normalizePath(nextPath)) {
     window.history.replaceState({}, "", nextPath);
     window.dispatchEvent(new PopStateEvent("popstate"));
   }
+
   return null;
 }
 
@@ -66,6 +67,35 @@ function withTimeout(promise, ms = 4000) {
       setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
     ),
   ]);
+}
+
+function isYardOnlyUser(access) {
+  if (!access?.session) return false;
+
+  return (
+    !!access?.allowed?.yardTickets &&
+    !access?.allowed?.admin &&
+    !access?.allowed?.managerDashboard &&
+    !access?.allowed?.plantDashboard &&
+    !access?.allowed?.customerPortal &&
+    !access?.allowed?.jobTickets
+  );
+}
+
+function getDefaultRoute(access) {
+  if (!access?.session) return "/";
+
+  if (access?.allowed?.admin) return "/admin";
+  if (access?.allowed?.managerDashboard) return "/manager";
+  if (access?.allowed?.plantDashboard) return "/internal";
+  if (access?.allowed?.yardTickets) return "/yard-tickets";
+  if (access?.allowed?.jobTickets) return "/job-tickets";
+  if (access?.allowed?.customerPortal) return "/customer";
+  if (access.role === "project_manager") {
+  return "/job-reports";
+}
+
+  return "/";
 }
 
 export default function App() {
@@ -80,14 +110,16 @@ export default function App() {
 
     async function loadAccess() {
       try {
-        console.log("App loadAccess started");
         const result = await withTimeout(getAccessContext(), 4000);
+
         if (cancelled) return;
-        console.log("App loadAccess success", result);
+
         setAccess(result || EMPTY_ACCESS);
       } catch (error) {
         console.error("App loadAccess failed", error);
+
         if (cancelled) return;
+
         setAccess(EMPTY_ACCESS);
       } finally {
         if (!cancelled) {
@@ -96,17 +128,15 @@ export default function App() {
       }
     }
 
-    loadAccess();
-
-    const handlePopState = () => {
+    function handlePopState() {
       setCurrentPath(normalizePath(window.location.pathname));
-    };
+    }
+
+    loadAccess();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event) => {
-      console.log("Auth state changed:", _event);
-
+    } = supabase.auth.onAuthStateChange(() => {
       loadAccess();
       setCurrentPath(normalizePath(window.location.pathname));
     });
@@ -123,6 +153,14 @@ export default function App() {
   const path = currentPath;
   const isSignedIn = !!access.session;
 
+  if (path === "/admin/accounting") {
+  if (!isSignedIn || !access.allowed.admin) {
+    return redirectToPath(getDefaultRoute(access));
+  }
+
+  return <AccountingExports access={access} role={access.role} />;
+}
+
   if (loading) {
     return (
       <div style={{ padding: 40, fontFamily: "Arial, sans-serif" }}>
@@ -136,8 +174,24 @@ export default function App() {
   }
 
   if (path === "/") {
+    if (isYardOnlyUser(access)) {
+      return redirectToPath("/yard-tickets");
+    }
+
     return <Home access={access} />;
   }
+
+  if (path === "/job-reports") {
+  if (
+  !isSignedIn ||
+  (!access.allowed.managerDashboard &&
+    !access.allowed.jobReports)
+) {
+    return redirectToPath(getDefaultRoute(access));
+  }
+
+  return <JobReports access={access} role={access.role} />;
+}
 
   if (path === "/customer") {
     if (!isSignedIn || !access.allowed.customerPortal) {
@@ -162,6 +216,14 @@ export default function App() {
     return <AdminPage access={access} role={access.role} />;
   }
 
+  if (path === "/admin/accounting") {
+  if (!isSignedIn || !access.allowed.admin) {
+    return redirectToPath(getDefaultRoute(access));
+  }
+
+  return <AccountingExports access={access} role={access.role} />;
+}
+
   if (path === "/internal") {
     if (!isSignedIn || !access.allowed.plantDashboard) {
       return redirectToPath(getDefaultRoute(access));
@@ -184,12 +246,28 @@ export default function App() {
     return <ManagerDashboard access={access} role={access.role} />;
   }
 
+  if (path === "/dispatch") {
+    if (!isSignedIn || !access.allowed.plantDashboard) {
+      return redirectToPath(getDefaultRoute(access));
+    }
+
+    return <DispatchApp access={access} role={access.role} />;
+  }
+
   if (path === "/jobupdates") {
     if (!isSignedIn || !access.allowed.customerPortal) {
       return redirectToPath(getDefaultRoute(access));
     }
 
     return <JobUpdates access={access} role={access.role} />;
+  }
+
+  if (path === "/yard-tickets") {
+    if (!isSignedIn || !access.allowed.yardTickets) {
+      return redirectToPath(getDefaultRoute(access));
+    }
+
+    return <YardTickets access={access} role={access.role} />;
   }
 
   if (path === "/job-tickets") {
@@ -199,6 +277,10 @@ export default function App() {
 
     return <JobTickets access={access} role={access.role} />;
   }
+
+  if (path === "/scale-dashboard") {
+  return <ScaleDashboard access={access} />;
+}
 
   return redirectToPath(getDefaultRoute(access));
 }
